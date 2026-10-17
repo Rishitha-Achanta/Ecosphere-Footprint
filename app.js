@@ -117,7 +117,10 @@ if (form) {
         try {
             localStorage.setItem('ecosphere-answers', JSON.stringify(answers));
             localStorage.removeItem('ecosphere-insights');
-            try { sessionStorage.removeItem('ecosphere-life-unlocked'); } catch { /* Session storage is optional. */ }
+            try {
+                sessionStorage.removeItem('ecosphere-life-unlocked');
+                sessionStorage.removeItem('ecosphere-life-game-id');
+            } catch { /* Session storage is optional. */ }
             navigateAfterRipple('cascade.html');
         } catch {
             window.alert('Your browser could not save this check-in. Please enable local storage and try again.');

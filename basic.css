@@ -877,6 +877,7 @@ button > .button-ripple, .button > .button-ripple {
 }
 .event-context { margin: 0 0 14px; padding: 14px 16px; border-left: 3px solid #328b8e; border-radius: 0 10px 10px 0; background: #e6f2f7; color: #365a72; font-size: 14px; line-height: 1.65; }
 .event-question { margin: 0 0 17px; color: #173e5c; font-size: 17px; font-weight: 700; line-height: 1.5; }
+.game-action-status { min-height: 1.5em; margin: -6px 0 13px; color: #187566; font-size: 13px; font-weight: 700; line-height: 1.5; }
 .life-choices { display: grid; gap: 10px; }
 .life-choice {
     display: grid;
@@ -905,6 +906,7 @@ button > .button-ripple, .button > .button-ripple {
 .lifestyle-page .life-hint-area .button-secondary { flex: 0 0 auto; border-color: rgba(30, 79, 111, .22); background: #edf5f8; color: #173e5c; }
 .lifestyle-page .life-hint-area .button-secondary:hover { background: #e1f0f3; }
 .life-hint { flex: 1; margin: 7px 0 0; color: #315875; font-size: 14px; line-height: 1.7; }
+.life-hint.is-error { color: #98453f; font-weight: 700; }
 .life-key-help { flex: 0 0 100%; color: #176b8c; font-size: 13px; font-weight: 700; text-underline-offset: 3px; }
 .life-key-help[hidden], #insight-retry[hidden], #gemini-key-help[hidden] { display: none; }
 .insight-recovery { display: grid; justify-items: start; gap: 9px; margin: 10px 0 16px; }

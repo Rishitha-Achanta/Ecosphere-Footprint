@@ -7,7 +7,7 @@
     <meta name="description" content="Play through everyday choices shaped by your Ecosphere questionnaire answers.">
     <title>Little Planet Life — Ecosphere</title>
     <link rel="stylesheet" href="basic.css">
-    <script src="game.js" defer></script>
+    <script src="lifestyle.js" defer></script>
 </head>
 <body class="lifestyle-page">
     <header class="site-header">
@@ -44,6 +44,19 @@
             <a class="button button-primary" href="questionnaire.html">Go to questionnaire <span aria-hidden="true">→</span></a>
         </section>
 
+        <section class="life-empty life-loading" id="game-loading" hidden aria-live="polite">
+            <p class="life-card-kicker">PREPARING YOUR STORY</p>
+            <h2>Building your everyday choices</h2>
+            <p>Connecting your questionnaire to Little Planet Life…</p>
+        </section>
+
+        <section class="life-empty" id="game-error" hidden aria-live="assertive">
+            <p class="life-card-kicker">LITTLE PLANET LIFE</p>
+            <h2>We could not open this game just yet</h2>
+            <p id="game-error-text">Please restart the local server and try again.</p>
+            <button class="button button-primary" id="game-retry" type="button">Try again <span aria-hidden="true">↻</span></button>
+        </section>
+
         <section class="life-game" id="game-panel" hidden aria-label="Little Planet Life game">
             <div class="life-dashboard">
                 <div class="life-day-card">
@@ -68,6 +81,7 @@
                 <h2 id="event-title" tabindex="-1"></h2>
                 <p class="event-context" id="event-context"></p>
                 <p class="event-question" id="event-question"></p>
+                <p class="game-action-status" id="game-action-status" aria-live="polite"></p>
                 <div class="life-choices" id="life-choices" role="group" aria-label="Choose what to do"></div>
                 <div class="life-hint-area">
                     <button class="button button-secondary" id="hint-button" type="button">Get a Gemini hint <span aria-hidden="true">✧</span></button>

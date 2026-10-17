@@ -17,7 +17,7 @@ Open http://localhost:8000. The server uses `gemini-3.8-flash` through Gemini's 
 
 Opening the HTML directly does not provide Gemini explanations; run the local server instead. Generated insights are cached in the browser for the submitted answers. Submitting the questionnaire again clears that cache.
 
-The server sends the selected answer labels to Google Gemini and validates the returned six-layer JSON. The game sends the current scene, answer labels, and previous game choices when you request a hint. No name or email is collected. The server binds to loopback and is intended for local development.
+The server sends the selected answer labels to Google Gemini and validates the returned six-layer JSON. Little Planet Life's score, scene order, choices, completion recap, and game session live in `server.py`; `lifestyle.js` only renders the state returned by Python. The game sends the current server-side scene, answer labels, and previous choices when you request a hint. No name or email is collected. The server binds to loopback and is intended for local development.
 
 ## Artwork
 

@@ -4,6 +4,8 @@ import os
 from pathlib import Path
 import random
 import re
+import secrets
+import threading
 import time
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from urllib.error import HTTPError, URLError
@@ -41,6 +43,30 @@ for name, minimum, maximum, step, labels in re.findall(r'<input type="range" nam
     OPTIONS[name] = {index: label for index, label in enumerate(choices)}
 
 
+# Little Planet Life is intentionally defined on the server.  The browser only
+# renders a state returned by these functions, so scores and choices remain
+# valid even if someone reloads the page or a client script is interrupted.
+LIFE_SCORE_KEYS = ('transport', 'appliances', 'flights', 'diet', 'trash', 'shopping', 'secondhand', 'electronics', 'showers', 'plastics')
+GAME_SESSION_TTL_SECONDS = 60 * 60 * 4
+GAME_SESSIONS = {}
+GAME_SESSIONS_LOCK = threading.RLock()
+
+LIFE_SCENES = (
+    {'answer_key': 'transport', 'title': 'A rainy morning commute', 'context': 'Your check-in says gasoline-vehicle travel is {answer}. A friend headed the same way offers to share the trip.', 'question': 'How do you get across town today?', 'choices': (('Drive alone in a gasoline car', 8), ('Share the ride with your friend', 3), ('Take the bus or train', -3), ('Walk or bike if it is safe and practical', -5))},
+    {'answer_key': 'appliances', 'title': 'A warm afternoon at home', 'context': 'You reported running high-energy appliances {answer}. The room is getting warm while you work.', 'question': 'What is your first move to stay comfortable?', 'choices': (('Run the air conditioner with the windows open', 8), ('Cool the room with windows closed and a reasonable setting', 3), ('Use a fan and close the curtains against direct sun', -2), ('Ventilate naturally when it is cooler outside', -4))},
+    {'answer_key': 'flights', 'title': 'A weekend visit with friends', 'context': 'You estimated {answer} of air travel in a typical year. Friends invite you to a nearby gathering.', 'question': 'How do you make the trip happen?', 'choices': (('Book several flights for short visits', 9), ('Take one direct flight', 5), ('Use a train or bus if the route works', -3), ('Join remotely or plan a local get-together', -5))},
+    {'answer_key': 'diet', 'title': 'Lunch with your friends', 'context': 'Your questionnaire answer for beef and lamb meals was {answer}. The cafe has several filling options.', 'question': 'What goes on your plate today?', 'choices': (('Order the beef or lamb special', 8), ('Choose another meat option', 4), ('Try a vegetarian meal', -3), ('Choose a plant-based meal using food already available', -5))},
+    {'answer_key': 'trash', 'title': 'The kitchen bin is full', 'context': 'You said your household makes {answer} of trash each week. You notice clean containers and food scraps in the bin.', 'question': 'How do you handle the cleanup?', 'choices': (('Throw everything into the regular trash', 7), ('Recycle accepted containers', 2), ('Recycle and compost where those services exist', -3), ('Sort waste and set aside usable items to reuse', -5))},
+    {'answer_key': 'shopping', 'title': 'A tempting new jacket', 'context': 'You said you buy new clothes or other products {answer}. Your current jacket still works, but a new one catches your eye.', 'question': 'What do you do before checking out?', 'choices': (('Buy the new jacket right away', 7), ('Wait a day and decide whether you need it', 2), ('Repair or keep wearing the jacket you own', -3), ('Borrow one or look for a second-hand option', -5))},
+    {'answer_key': 'secondhand', 'title': 'Finding a bookshelf', 'context': 'Your check-in says you buy second-hand products {answer}. You need a bookshelf for your room.', 'question': 'Where do you look first?', 'choices': (('Order a brand-new bookshelf', 6), ('Check second-hand shops or local listings', -4), ('Reuse, borrow, or repair a shelf already nearby', -5))},
+    {'answer_key': 'electronics', 'title': 'A new phone is released', 'context': 'You usually replace electronics {answer}. Your current phone still works, and a newer model is advertised.', 'question': 'How do you decide what to do?', 'choices': (('Buy the new phone now', 8), ('Replace it when it no longer meets your needs', 2), ('Repair it or keep using it for longer', -5))},
+    {'answer_key': 'dishes', 'title': 'Dishes after dinner', 'context': 'You said you usually use a {answer}. Tonight there are enough dishes for a small load.', 'question': 'How do you wash them efficiently?', 'choices': (('Run the dishwasher half-full', 6), ('Wait for a full load and use an efficient cycle', -4), ('Handwash in a filled basin', -3), ('Leave the hot tap running while washing', 6))},
+    {'answer_key': 'showers', 'title': 'Winding down for the night', 'context': 'You usually take showers that last {answer}. You have had a busy day and want to relax.', 'question': 'How do you use water tonight?', 'choices': (('Take a shower longer than 15 minutes', 7), ('Take a shower of about 10 minutes', 3), ('Keep it near 5 minutes', -3), ('Take a quick shower and turn off the water while soaping up', -5))},
+    {'answer_key': 'plastics', 'title': 'Packing snacks for tomorrow', 'context': 'You reported using single-use plastics {answer}. You are packing a drink and snacks for the day.', 'question': 'What do you bring along?', 'choices': (('Single-use bottles, bags, cups, and wrapped snacks', 8), ('A mix of disposable packaging and reusable items', 3), ('A reusable bottle and food container', -3), ('Reusable containers and unpackaged snacks', -5))},
+    {'answer_key': 'chemicals', 'title': 'A battery and leftover paint', 'context': 'You said you handle household or garden products {answer}. A remote needs a new battery, and you find old paint and cleaner in storage.', 'question': 'How do you store or dispose of them?', 'choices': (('Put batteries and leftover products in regular trash', 8), ('Store everything without checking the labels', 3), ('Follow product labels and local disposal guidance', -4), ('Store items safely and take hazardous waste to a collection site', -5))},
+)
+
+
 def validate_answers(data):
     answers = data.get('answers') if isinstance(data, dict) else None
     expected = set(OPTIONS)
@@ -57,12 +83,134 @@ def validate_answers(data):
     return labels
 
 
+def game_starting_score(answers):
+    """Return the illustrative 0–50 score from the scored questionnaire answers."""
+    total = 0.0
+    for key in LIFE_SCORE_KEYS:
+        highest_value = max(OPTIONS[key])
+        value = answers[key]
+        point_value = 5 - value / highest_value * 5 if key == 'secondhand' else value / highest_value * 5
+        total += point_value
+    return round(total)
+
+
+def game_priority(scene, answers):
+    key = scene['answer_key']
+    if key == 'secondhand':
+        return 4 - answers[key]
+    if key in {'dishes', 'chemicals'}:
+        return 2
+    return answers[key] / max(OPTIONS[key]) * 4
+
+
+def clean_expired_game_sessions():
+    cutoff = time.time() - GAME_SESSION_TTL_SECONDS
+    with GAME_SESSIONS_LOCK:
+        expired_ids = [game_id for game_id, state in GAME_SESSIONS.items() if state['touched_at'] < cutoff]
+        for game_id in expired_ids:
+            del GAME_SESSIONS[game_id]
+
+
+def new_game(answers, labels):
+    clean_expired_game_sessions()
+    scenes = list(LIFE_SCENES)
+    # Break ties differently each game while retaining the strongest reported
+    # lifestyle themes at the beginning of the story.
+    random.SystemRandom().shuffle(scenes)
+    scenes.sort(key=lambda scene: game_priority(scene, answers), reverse=True)
+    starting_score = game_starting_score(answers)
+    game_id = secrets.token_urlsafe(32)
+    state = {
+        'answers': dict(answers),
+        'labels': dict(labels),
+        'scenes': scenes,
+        'round': 0,
+        'score': starting_score,
+        'starting_score': starting_score,
+        'actions': [],
+        'touched_at': time.time(),
+    }
+    with GAME_SESSIONS_LOCK:
+        GAME_SESSIONS[game_id] = state
+    return game_id, state
+
+
+def find_game(game_id):
+    if not isinstance(game_id, str) or not 20 <= len(game_id) <= 100:
+        raise ValueError('This game session is invalid. Start a new game from the cascade.')
+    with GAME_SESSIONS_LOCK:
+        state = GAME_SESSIONS.get(game_id)
+        if not state or state['touched_at'] < time.time() - GAME_SESSION_TTL_SECONDS:
+            GAME_SESSIONS.pop(game_id, None)
+            raise LookupError('This game session has expired. Start a new game from the cascade.')
+        state['touched_at'] = time.time()
+        return state
+
+
+def signed_score(value):
+    return f'+{value}' if value > 0 else str(value)
+
+
+def game_view(state):
+    total = len(state['scenes'])
+    completed = state['round'] >= total
+    view = {
+        'complete': completed,
+        'score': state['score'],
+        'starting_score': state['starting_score'],
+        'completed': state['round'],
+        'total': total,
+        'actions': list(state['actions']) if completed else [],
+    }
+    if completed:
+        view['score_change'] = state['score'] - state['starting_score']
+        return view
+    scene = state['scenes'][state['round']]
+    view['day'] = state['round'] // 3 + 1
+    view['decision'] = state['round'] % 3 + 1
+    view['scene'] = {
+        'title': scene['title'],
+        'context': scene['context'].format(answer=state['labels'][scene['answer_key']]),
+        'question': scene['question'],
+        'choices': [{'text': text, 'points': points} for text, points in scene['choices']],
+    }
+    return view
+
+
+def choose_game_option(game_id, choice_index):
+    if type(choice_index) is not int:
+        raise ValueError('Choose one of the available game options.')
+    state = find_game(game_id)
+    with GAME_SESSIONS_LOCK:
+        if state['round'] >= len(state['scenes']):
+            return state, None
+        scene = state['scenes'][state['round']]
+        if choice_index not in range(len(scene['choices'])):
+            raise ValueError('That option is not available for this game moment.')
+        choice, points = scene['choices'][choice_index]
+        state['score'] += points
+        state['actions'].append({'title': scene['title'], 'choice': choice, 'points': points})
+        state['round'] += 1
+        state['touched_at'] = time.time()
+        return state, points
+
+
+def restart_game(game_id):
+    state = find_game(game_id)
+    with GAME_SESSIONS_LOCK:
+        state['round'] = 0
+        state['score'] = state['starting_score']
+        state['actions'] = []
+        state['touched_at'] = time.time()
+    return state
+
+
 def validate_insights(data):
     if not isinstance(data, dict) or set(data) != set(LAYERS):
         raise ValueError('Incomplete model response.')
     for value in data.values():
-        if not isinstance(value, str) or not 50 <= len(value.split()) <= 150:
-            raise ValueError('Each insight must contain 50 to 150 words.')
+        if not isinstance(value, str) or not 50 <= len(value.split()) <= 120:
+            raise ValueError('Each insight must contain 50 to 120 words.')
         if not 1 <= len(re.findall(r'[^.!?]+[.!?](?:\s|$)', value.strip())) <= 3:
             raise ValueError('Expected one to three sentences.')
     return data
@@ -202,7 +350,7 @@ twilight: trash, shopping, secondhand purchases, electronics, and plastics; conn
 deep: flights, gasoline transport, high-energy appliances, meat, and showers; describe indirect links through emissions, ocean heat, and carbon storage.
 floor: bring together all answers, especially waste, chemical handling, plastics, and product lifetimes, with one practical next step.
 Never imply that more frequent handling of household chemicals is itself harmful; focus on proper storage and disposal. Dishwashers can use less water than handwashing when efficiently loaded. Return only the six-key JSON object.
-IMPORTANT FORMAT OVERRIDE: each value must be 50 to 150 words and 1 to 3 sentences. Make each response tailored to the user's exact answer labels and to the specific environment named by its key. Use a clear chain: selected action, pathway into or effect on this layer, plausible layer-specific damage or pressure, and a realistic action that prevents, reduces, or helps repair it. Include the user's actual choice and frequency where relevant. Only mention an answer when it has a credible effect on this layer; explain the pathway and whether it is direct or indirect. Never pad with general environmental advice or repeat the same consequence at every layer. Address all relevant answers across the six responses without forcing irrelevant details into a layer. Be concrete without guilt, certainty, or invented emissions numbers. Household chemical handling frequency alone is not harmful; for waterways and seafloor, discuss pollution only if products are disposed of improperly, and recommend safe storage and local disposal guidance. Efficiently loaded dishwashers can save water compared with handwashing. Use plain prose only, with no bullets, headings, or markdown inside values.
+IMPORTANT FORMAT OVERRIDE: each value must be 50 to 120 words and 1 to 3 sentences. Make each response tailored to the user's exact answer labels and to the specific environment named by its key. Use a clear chain: selected action, pathway into or effect on this layer, plausible layer-specific damage or pressure, and a realistic action that prevents, reduces, or helps repair it. Include the user's actual choice and frequency where relevant. Only mention an answer when it has a credible effect on this layer; explain the pathway and whether it is direct or indirect. Never pad with general environmental advice or repeat the same consequence at every layer. Address all relevant answers across the six responses without forcing irrelevant details into a layer. Be concrete without guilt, certainty, or invented emissions numbers. Household chemical handling frequency alone is not harmful; for waterways and seafloor, discuss pollution only if products are disposed of improperly, and recommend safe storage and local disposal guidance. Efficiently loaded dishwashers can save water compared with handwashing. Use plain prose only, with no bullets, headings, or markdown inside values.
 Layer-specific focus:
 - sky/stratosphere: the ozone layer shields Earth from UV. The survey does not measure ozone-depleting substances, and gasoline travel, flights, appliances, diet, or showers do not directly damage ozone. Do not imply otherwise. If connecting these choices to the sky, describe their climate emissions as a separate atmospheric issue and give climate-focused steps; do not claim those steps repair ozone depletion.
 - air/troposphere: connect the user's gasoline travel, flight hours, high-energy appliance use, and beef/lamb frequency to combustion, electricity demand, and food-production emissions that affect air quality or climate. Recommend relevant options such as fewer gasoline trips, efficient appliance use, or replacing some beef/lamb meals.
@@ -258,11 +406,23 @@ class Handler(SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
-        path = urlsplit(self.path).path
+        parsed = urlsplit(self.path)
+        path = parsed.path
         if path == '/':
             self.path = '/homepage.html'
             path = self.path
-        allowed = {'/homepage.html', '/questionnaire.html', '/cascade.html', '/lifestyle.html', '/basic.css', '/app.js', '/game.js'}
+        # Accept the short game URLs people commonly try, then send them to
+        # the canonical page so relative assets and navigation work normally.
+        if path.rstrip('/') in {'/game', '/game.html', '/planet-life', '/planet-life.html', '/lifestyle'}:
+            location = '/lifestyle.html'
+            if parsed.query:
+                location += f'?{parsed.query}'
+            self.send_response(302)
+            self.send_header('Location', location)
+            self.send_header('Cache-Control', 'no-store')
+            self.end_headers()
+            return
+        allowed = {'/homepage.html', '/questionnaire.html', '/cascade.html', '/lifestyle.html', '/basic.css', '/app.js', '/game.js', '/lifestyle.js'}
         asset = Path(self.translate_path(path)).resolve()
         if path not in allowed and not (asset.is_relative_to(ROOT / 'assets') and asset.is_file()):
             self.send_error(404)
@@ -273,7 +433,9 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_error(405)
 
     def do_POST(self):
-        if self.path not in {'/api/insights', '/api/hint'}:
+        path = urlsplit(self.path).path
+        game_paths = {'/api/game/start', '/api/game/state', '/api/game/choose', '/api/game/restart', '/api/game/hint'}
+        if path not in {'/api/insights', '/api/hint', *game_paths}:
             self.send_json(404, {'error': 'Not found'})
             return
         origin = self.headers.get('Origin')
@@ -282,35 +444,82 @@ class Handler(SimpleHTTPRequestHandler):
             return
         try:
             length = int(self.headers.get('Content-Length', '0'))
-            if not 0 < length <= 4096:
+            if not 0 < length <= 16384:
                 raise ValueError('Invalid request size.')
             payload = json.loads(self.rfile.read(length))
-            if self.path == '/api/insights':
+            if not isinstance(payload, dict):
+                raise ValueError('Expected an object.')
+        except (ValueError, UnicodeError, json.JSONDecodeError):
+            message = 'Please submit all twelve valid answers.' if path == '/api/insights' else 'The request was incomplete or invalid.'
+            self.send_json(400, {'error': message})
+            return
+
+        # Game score, choice handling, scene order, and recap are all Python
+        # server state. The browser receives only a safe view of that state.
+        try:
+            if path == '/api/game/start':
+                if payload.get('entry') != 'cascade-bottom':
+                    self.send_json(403, {'error': 'Begin Little Planet Life from the final cascade layer.'})
+                    return
+                labels = validate_answers(payload)
+                game_id, state = new_game(payload['answers'], labels)
+                self.send_json(200, {'game_id': game_id, 'game': game_view(state)})
+                return
+            if path == '/api/game/state':
+                state = find_game(payload.get('game_id'))
+                self.send_json(200, {'game': game_view(state)})
+                return
+            if path == '/api/game/choose':
+                state, change = choose_game_option(payload.get('game_id'), payload.get('choice_index'))
+                self.send_json(200, {'game': game_view(state), 'last_change': change})
+                return
+            if path == '/api/game/restart':
+                state = restart_game(payload.get('game_id'))
+                self.send_json(200, {'game': game_view(state)})
+                return
+            if path == '/api/game/hint':
+                state = find_game(payload.get('game_id'))
+                if state['round'] >= len(state['scenes']):
+                    raise ValueError('The game is complete. Start another round for a new hint.')
+                scene = state['scenes'][state['round']]
+                scenario = {
+                    'title': scene['title'],
+                    'context': scene['context'].format(answer=state['labels'][scene['answer_key']]),
+                    'question': scene['question'],
+                }
+                choices = [choice[0] for choice in scene['choices']]
+                history = [f"{action['title']}: {action['choice']}" for action in state['actions']]
+            elif path == '/api/insights':
                 answers = validate_answers(payload)
                 hint_data = None
             else:
                 hint_data = validate_hint_request(payload)
-        except (ValueError, UnicodeError):
-            message = 'Please submit all twelve valid answers.' if self.path == '/api/insights' else 'The game hint request was incomplete or invalid.'
-            self.send_json(400, {'error': message})
+        except LookupError as error:
+            self.send_json(410, {'error': str(error), 'recovery': 'restart_game'})
             return
+        except (ValueError, TypeError, KeyError) as error:
+            self.send_json(400, {'error': str(error) or 'The request was incomplete or invalid.'})
+            return
+
         key = os.environ.get('GEMINI_API_KEY', '').strip()
         if not key:
             message = 'GEMINI_API_KEY is not configured. Create a key in Google AI Studio, add it to the project .env file or the environment used to start server.py, and restart the server. This app cannot create Google API keys.'
             self.send_json(503, {'error': message, 'recovery': 'replace_key'})
             return
         try:
-            if self.path == '/api/insights':
+            if path == '/api/game/hint':
+                result = {'hint': generate_hint(state['labels'], scenario, choices, history, key)}
+            elif path == '/api/insights':
                 result = {'insights': generate_insights(answers, key)}
             else:
                 answers, scenario, choices, history = hint_data
                 result = {'hint': generate_hint(answers, scenario, choices, history, key)}
         except GeminiServiceError as error:
-            service = 'hint' if self.path == '/api/hint' else 'ripple'
+            service = 'hint' if path in {'/api/hint', '/api/game/hint'} else 'ripple'
             self.send_json(502, {'error': f'Gemini {service}: {error}', 'recovery': error.category})
             return
         except (ValueError, TypeError, KeyError) as error:
-            service = 'hint' if self.path == '/api/hint' else 'ripple'
+            service = 'hint' if path in {'/api/hint', '/api/game/hint'} else 'ripple'
             self.send_json(502, {'error': f'Gemini {service} response was incomplete or malformed. Please retry. ({error})', 'recovery': 'retry'})
             return
         self.send_json(200, result)
