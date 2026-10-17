@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parent
 LAYERS = ('sky', 'air', 'water', 'twilight', 'deep', 'floor')
 # Use the actual questionnaire as the canonical answer vocabulary.
 OPTIONS = {}
-for name, value, label in re.findall(r'<input type="radio" name="([\w-]+)" value="(\d+)"[^>]*><span>([^<]+)</span>', (ROOT / 'questionnaire.html').read_text()):
+for name, value, label in re.findall(r'<input type="radio" name="([\w-]+)" value="(\d+)"[^>]*><span>([^<]+)</span>', (ROOT / 'questionnaire.html').read_text(encoding='utf-8')):
     OPTIONS.setdefault(name, {})[int(value)] = label
 
 
