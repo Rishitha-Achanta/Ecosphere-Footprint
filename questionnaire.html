@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#071d2b">
+    <meta name="description" content="Answer ten questions to explore your everyday environmental footprint.">
+    <title>Your footprint check — Ecosphere</title>
+    <link rel="stylesheet" href="basic.css">
+    <script src="app.js" defer></script>
+</head>
+<body class="questionnaire-page">
+    <header class="site-header">
+        <a class="brand" href="homepage.html" aria-label="Ecosphere home">
+            <span class="brand-mark" aria-hidden="true">◉</span>
+            ECOSPHERE
+        </a>
+        <a class="text-link" href="homepage.html">← Back home</a>
+    </header>
+
+    <main class="quiz-wrap">
+        <div class="quiz-heading">
+            <p class="eyebrow"><span class="eyebrow-line"></span> YOUR FOOTPRINT CHECK</p>
+            <h1>Little things add up.</h1>
+            <p>Choose the answer that feels closest to your usual routine. This is a reflection tool, not a test.</p>
+            <div class="progress-track" aria-label="10 questions">
+                <span></span>
+            </div>
+            <p class="progress-caption">10 questions <span>·</span> Pick one answer for each</p>
+        </div>
+
+        <form id="footprint-form" action="cascade.html">
+            <div class="question-grid">
+                <fieldset class="question-card">
+                    <legend><span class="question-number">01</span> How do you usually get around for everyday trips?</legend>
+                    <label class="answer-option"><input type="radio" name="transport" value="0" required><span>Walk, bike, or public transit</span></label>
+                    <label class="answer-option"><input type="radio" name="transport" value="1"><span>Share rides or use a small car sometimes</span></label>
+                    <label class="answer-option"><input type="radio" name="transport" value="2"><span>Drive most days</span></label>
+                    <label class="answer-option"><input type="radio" name="transport" value="3"><span>Drive a larger vehicle most days</span></label>
+                </fieldset>
+
+                <fieldset class="question-card">
+                    <legend><span class="question-number">02</span> How often do you fly in a typical year?</legend>
+                    <label class="answer-option"><input type="radio" name="flights" value="0" required><span>I don't usually fly</span></label>
+                    <label class="answer-option"><input type="radio" name="flights" value="1"><span>One short trip</span></label>
+                    <label class="answer-option"><input type="radio" name="flights" value="2"><span>A few flights</span></label>
+                    <label class="answer-option"><input type="radio" name="flights" value="3"><span>Several long-distance trips</span></label>
+                </fieldset>
+
+                <fieldset class="question-card">
+                    <legend><span class="question-number">03</span> Which best describes the food you eat?</legend>
+                    <label class="answer-option"><input type="radio" name="diet" value="0" required><span>Mostly plant-based</span></label>
+                    <label class="answer-option"><input type="radio" name="diet" value="1"><span>A mix, with meat occasionally</span></label>
+                    <label class="answer-option"><input type="radio" name="diet" value="2"><span>Meat or dairy most days</span></label>
+                    <label class="answer-option"><input type="radio" name="diet" value="3"><span>Meat at most meals</span></label>
+                </fieldset>
+
+                <fieldset class="question-card">
+                    <legend><span class="question-number">04</span> How often do you choose seasonal or locally grown food?</legend>
+                    <label class="answer-option"><input type="radio" name="local-food" value="0" required><span>Often, when it's available</span></label>
+                    <label class="answer-option"><input type="radio" name="local-food" value="1"><span>Sometimes</span></label>
+                    <label class="answer-option"><input type="radio" name="local-food" value="2"><span>Not very often</span></label>
+                    <label class="answer-option"><input type="radio" name="local-food" value="3"><span>Rarely or never</span></label>
+                </fieldset>
+
+                <fieldset class="question-card">
+                    <legend><span class="question-number">05</span> How energy-efficient is your home?</legend>
+                    <label class="answer-option"><input type="radio" name="energy" value="0" required><span>Very efficient, or powered by renewables</span></label>
+                    <label class="answer-option"><input type="radio" name="energy" value="1"><span>Some efficient features</span></label>
+                    <label class="answer-option"><input type="radio" name="energy" value="2"><span>A few, but room to improve</span></label>
+                    <label class="answer-option"><input type="radio" name="energy" value="3"><span>Not sure, or not very efficient</span></label>
+                </fieldset>
+
+                <fieldset class="question-card">
+                    <legend><span class="question-number">06</span> What temperature do you keep your home?</legend>
+                    <label class="answer-option"><input type="radio" name="temperature" value="0" required><span>I use heating and cooling sparingly</span></label>
+                    <label class="answer-option"><input type="radio" name="temperature" value="1"><span>I adjust the thermostat a little</span></label>
+                    <label class="answer-option"><input type="radio" name="temperature" value="2"><span>I keep it comfortable most of the time</span></label>
+                    <label class="answer-option"><input type="radio" name="temperature" value="3"><span>I use heating or air conditioning a lot</span></label>
+                </fieldset>
+
+                <fieldset class="question-card">
+                    <legend><span class="question-number">07</span> How much single-use packaging do you bring home?</legend>
+                    <label class="answer-option"><input type="radio" name="packaging" value="0" required><span>Very little; I bring reusables</span></label>
+                    <label class="answer-option"><input type="radio" name="packaging" value="1"><span>A small amount</span></label>
+                    <label class="answer-option"><input type="radio" name="packaging" value="2"><span>Quite a bit each week</span></label>
+                    <label class="answer-option"><input type="radio" name="packaging" value="3"><span>Most purchases come packaged</span></label>
+                </fieldset>
+
+                <fieldset class="question-card">
+                    <legend><span class="question-number">08</span> What do you do with recyclables and food scraps?</legend>
+                    <label class="answer-option"><input type="radio" name="waste" value="0" required><span>Recycle and compost whenever possible</span></label>
+                    <label class="answer-option"><input type="radio" name="waste" value="1"><span>Recycle most things</span></label>
+                    <label class="answer-option"><input type="radio" name="waste" value="2"><span>Recycle some items</span></label>
+                    <label class="answer-option"><input type="radio" name="waste" value="3"><span>Most waste goes in the trash</span></label>
+                </fieldset>
+
+                <fieldset class="question-card">
+                    <legend><span class="question-number">09</span> How do you approach water use at home?</legend>
+                    <label class="answer-option"><input type="radio" name="water" value="0" required><span>I keep showers short and fix leaks</span></label>
+                    <label class="answer-option"><input type="radio" name="water" value="1"><span>I try to be mindful of water</span></label>
+                    <label class="answer-option"><input type="radio" name="water" value="2"><span>I take long showers or water often</span></label>
+                    <label class="answer-option"><input type="radio" name="water" value="3"><span>I haven't thought much about it</span></label>
+                </fieldset>
+
+                <fieldset class="question-card">
+                    <legend><span class="question-number">10</span> How often do you buy new clothes or gadgets?</legend>
+                    <label class="answer-option"><input type="radio" name="shopping" value="0" required><span>Only when I need to; I repair or buy secondhand</span></label>
+                    <label class="answer-option"><input type="radio" name="shopping" value="1"><span>A few times a year</span></label>
+                    <label class="answer-option"><input type="radio" name="shopping" value="2"><span>Most months</span></label>
+                    <label class="answer-option"><input type="radio" name="shopping" value="3"><span>Frequently, including impulse buys</span></label>
+                </fieldset>
+            </div>
+
+            <div class="quiz-submit">
+                <p>Your answers stay in this browser and are used only to shape your journey.</p>
+                <button class="button button-primary" type="submit">See your ripple <span aria-hidden="true">→</span></button>
+            </div>
+        </form>
+    </main>
+
+    <footer class="site-footer">
+        <span>ECOSPHERE</span>
+        <span>Curiosity is a good place to start.</span>
+    </footer>
+</body>
+</html>
