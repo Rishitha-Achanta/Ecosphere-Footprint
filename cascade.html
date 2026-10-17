@@ -10,7 +10,7 @@
     <script src="app.js" defer></script>
 </head>
 <body class="cascade-page">
-    <header class="site-header cascade-header">
+    <header class="site-header cascade-header" id="page-top">
         <a class="brand" href="homepage.html" aria-label="Ecosphere home">
             <span class="brand-mark" aria-hidden="true">◉</span>
             ECOSPHERE
@@ -33,8 +33,6 @@
                 <span class="score-band" id="score-band">Complete the check-in</span>
             </div>
         </section>
-
-        <nav class="layer-nav" aria-label="Planet layers"><a href="#stratosphere"><span>01</span> Sky</a><a href="#troposphere"><span>02</span> Air</a><a href="#surface-ocean"><span>03</span> Surface</a><a href="#twilight-zone"><span>04</span> Twilight</a><a href="#deep-ocean"><span>05</span> Deep</a><a href="#ocean-floor"><span>06</span> Floor</a></nav>
 
         <div class="cascade">
             <section class="layer-section atmosphere-layer stratosphere" id="stratosphere">
@@ -105,6 +103,7 @@
                     <p>From the atmosphere to the ocean floor, Earth's layers are part of one living system. A footprint is not a verdict—it is an invitation to notice connections, ask questions, and choose a next step.</p>
                     <div class="layer-note"><span class="note-icon">↗</span><span><strong>Your ripple:</strong> <span data-insight="floor">Your everyday choices connect to this living system.</span></span></div>
                     <div class="end-actions">
+                        <button class="button button-secondary back-to-top" id="back-to-top" type="button">Back to top <span aria-hidden="true">↑</span></button>
                         <a class="button button-primary" href="questionnaire.html">Reflect again <span aria-hidden="true">↗</span></a>
                         <a class="text-link" href="homepage.html">Back to the surface ↑</a>
                     </div>

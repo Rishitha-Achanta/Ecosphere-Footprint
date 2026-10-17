@@ -2,14 +2,70 @@ const answerNames = ['transport', 'appliances', 'flights', 'diet', 'trash', 'sho
 const layers = ['sky', 'air', 'water', 'twilight', 'deep', 'floor'];
 const form = document.querySelector('#footprint-form');
 if (form) {
+    const cards = Array.from(form.querySelectorAll('.question-card'));
     const flightRange = form.querySelector('[name="flight-hours"]');
     const flightOutput = document.querySelector('#flight-hours-value');
+    const progressBar = document.querySelector('.progress-track span');
+    const progressTrack = document.querySelector('.progress-track');
+    const progressCaption = document.querySelector('.progress-caption');
+    progressCaption.setAttribute('aria-live', 'polite');
+    const questionGrid = form.querySelector('.question-grid');
+    const submitPanel = form.querySelector('.quiz-submit');
+    let activeQuestion = 0;
+    cards.forEach((card, index) => { card.tabIndex = -1; card.hidden = index !== 0; });
+    submitPanel.hidden = true;
+    const controls = document.createElement('div');
+    controls.className = 'quiz-step-controls';
+    controls.innerHTML = '<button class="button button-secondary" type="button" data-step-back>Back</button><p class="step-hint" aria-live="polite"></p><button class="button button-primary" type="button" data-step-next disabled>Continue <span aria-hidden="true">→</span></button>';
+    questionGrid.after(controls);
+    const backButton = controls.querySelector('[data-step-back]');
+    const nextButton = controls.querySelector('[data-step-next]');
+    const stepHint = controls.querySelector('.step-hint');
+    const activeCardAnswered = () => {
+        const card = cards[activeQuestion];
+        if (!card) return false;
+        return Boolean(card.querySelector('input[type="radio"]:checked') || card.dataset.rangeAnswered === 'true');
+    };
+    const renderQuestion = (focus = false) => {
+        const complete = activeQuestion >= cards.length;
+        questionGrid.hidden = complete;
+        controls.hidden = complete;
+        submitPanel.hidden = !complete;
+        if (complete) return;
+        cards.forEach((card, index) => { card.hidden = index !== activeQuestion; });
+        backButton.disabled = activeQuestion === 0;
+        nextButton.disabled = !activeCardAnswered();
+        nextButton.innerHTML = activeQuestion === cards.length - 1 ? 'Finish check-in <span aria-hidden="true">→</span>' : 'Continue <span aria-hidden="true">→</span>';
+        stepHint.textContent = `Question ${activeQuestion + 1} of ${cards.length}`;
+        progressTrack.setAttribute('aria-label', `Question ${activeQuestion + 1} of ${cards.length}`);
+        progressBar.style.width = `${((activeQuestion + 1) / cards.length) * 100}%`;
+        progressCaption.innerHTML = `${activeQuestion + 1} of ${cards.length} questions <span>·</span> Answer to continue`;
+        if (focus) {
+            cards[activeQuestion].focus({preventScroll: true});
+            cards[activeQuestion].scrollIntoView({behavior: 'smooth', block: 'center'});
+        }
+    };
+    backButton.addEventListener('click', () => { if (activeQuestion > 0) { activeQuestion--; renderQuestion(true); } });
+    nextButton.addEventListener('click', () => { if (activeCardAnswered()) { activeQuestion++; renderQuestion(true); } });
+    cards.forEach((card) => card.addEventListener('change', (event) => {
+        if (card !== cards[activeQuestion]) return;
+        if (event.target === flightRange) card.dataset.rangeAnswered = 'true';
+        nextButton.disabled = !activeCardAnswered();
+    }));
+    renderQuestion();
     const updateFlightLabel = () => { flightOutput.value = `${flightRange.value} hours`; flightOutput.textContent = flightOutput.value; };
     flightRange.addEventListener('input', () => {
         form.querySelector('[name="flights"]').checked = false;
+        cards[2].dataset.rangeAnswered = 'true';
         updateFlightLabel();
+        if (cards[activeQuestion] === cards[2]) nextButton.disabled = false;
     });
-    form.querySelector('[name="flights"]').addEventListener('change', () => { flightRange.value = 2; updateFlightLabel(); });
+    form.querySelector('[name="flights"]').addEventListener('change', () => {
+        flightRange.value = 2;
+        cards[2].dataset.rangeAnswered = 'false';
+        updateFlightLabel();
+        if (cards[activeQuestion] === cards[2]) nextButton.disabled = false;
+    });
     form.addEventListener('submit', (event) => {
         event.preventDefault();
         if (!form.reportValidity()) return;
@@ -81,18 +137,9 @@ async function personalize() {
     } finally { clearTimeout(timeout); }
 }
 personalize();
-if ('IntersectionObserver' in window) {
-    const observer = new IntersectionObserver(entries => {
-        entries.forEach(entry => {
-            if (!entry.isIntersecting) return;
-            document.querySelectorAll('.layer-nav a').forEach(link => {
-                if (link.hash === `#${entry.target.id}`) link.setAttribute('aria-current', 'location');
-                else link.removeAttribute('aria-current');
-            });
-        });
-    }, {rootMargin: '-15% 0px -45% 0px'});
-    document.querySelectorAll('.layer-section').forEach(section => observer.observe(section));
-}
+document.querySelector('#back-to-top')?.addEventListener('click', () => {
+    document.querySelector('#page-top')?.scrollIntoView({behavior: 'smooth', block: 'start'});
+});
 function navigateAfterRipple(url) {
     const delay = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 180;
     window.setTimeout(() => window.location.assign(url), delay);

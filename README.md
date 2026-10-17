@@ -1,6 +1,6 @@
 # Ecosphere
 
-A twelve-question reflection followed by an illustrated descent from the upper atmosphere to the seafloor. Gemini creates one or two sentences at each of the six layers using the complete set of selected answers.
+A twelve-question reflection shown one question at a time, followed by an illustrated descent from the upper atmosphere to the seafloor. Gemini creates a tailored 50–150 word explanation in 1–3 sentences for each of the six layers, grounded in the choices relevant to that environment.
 
 ## Run locally
 
