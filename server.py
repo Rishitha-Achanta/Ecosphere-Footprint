@@ -39,16 +39,16 @@ def validate_insights(data):
     if not isinstance(data, dict) or set(data) != set(LAYERS):
         raise ValueError('Incomplete model response.')
     for value in data.values():
-        if not isinstance(value, str) or not 20 <= len(value) <= 650:
-            raise ValueError('Invalid insight length.')
-        if not 1 <= len(re.findall(r'[^.!?]+[.!?](?:\s|$)', value.strip())) <= 2:
-            raise ValueError('Expected one or two sentences.')
+        if not isinstance(value, str) or not 50 <= len(value.split()) <= 150:
+            raise ValueError('Each insight must contain 50 to 150 words.')
+        if not 1 <= len(re.findall(r'[^.!?]+[.!?](?:\s|$)', value.strip())) <= 3:
+            raise ValueError('Expected one to three sentences.')
     return data
 
 
 def generate_insights(answers, api_key):
     schema = {'type': 'object', 'properties': {key: {'type': 'string'} for key in LAYERS}, 'required': list(LAYERS), 'additionalProperties': False}
-    prompt = '''Write six personal environmental insights, one for each key, in plain English.
+    prompt = '''Write six personal environmental insights, one for each key, in plain English. Ignore any conflicting length or sentence-count requests below; the mandatory format at the end of these instructions overrides them.
 Each value MUST have 1–2 short sentences (at most 65 words), directly addressing "you".
 For every layer, consider every selected answer and explain the relevant combined consequences of the user's actions; each explanation should mention the most relevant actions for that environment. Do not mechanically list irrelevant answers. Do not invent personal emissions estimates or causal certainty. Be warm, specific, scientifically careful, nonjudgmental, and explain indirect links as indirect.
 sky: flights and transport in relation to climate and the ozone shield; state that climate emissions and ozone depletion differ, and driving or flying do not directly destroy ozone.
@@ -58,6 +58,7 @@ twilight: trash, shopping, secondhand purchases, electronics, and plastics; conn
 deep: flights, gasoline transport, high-energy appliances, meat, and showers; describe indirect links through emissions, ocean heat, and carbon storage.
 floor: bring together all answers, especially waste, chemical handling, plastics, and product lifetimes, with one practical next step.
 Never imply that more frequent handling of household chemicals is itself harmful; focus on proper storage and disposal. Dishwashers can use less water than handwashing when efficiently loaded. Return only the six-key JSON object.
+IMPORTANT FORMAT OVERRIDE: each of the six values must be 50 to 150 words and 1 to 3 sentences. Tailor every value to the user's selected choices. Name the relevant action, describe a specific plausible damage or environmental pressure at that layer and its pathway, then give a realistic step to prevent, reduce, or help reverse that harm. Address all relevant answers across the six values, but do not force irrelevant details into a layer. Be concrete without guilt, certainty, or invented emissions numbers. Household chemical handling frequency alone is not harmful; explain safe storage/disposal. Efficiently loaded dishwashers can save water compared with handwashing.
 Selected answers (all twelve questions): ''' + json.dumps(answers)
     body = {'contents': [{'parts': [{'text': prompt}]}], 'generationConfig': {'responseMimeType': 'application/json', 'responseJsonSchema': schema}}
     model = os.environ.get('GEMINI_MODEL', 'gemini-2.5-flash')
@@ -112,16 +113,16 @@ class Handler(SimpleHTTPRequestHandler):
                 raise ValueError('Invalid request size.')
             answers = validate_answers(json.loads(self.rfile.read(length)))
         except (ValueError, UnicodeError):
-            self.send_json(400, {'error': 'Please submit all ten valid answers.'})
+            self.send_json(400, {'error': 'Please submit all twelve valid answers.'})
             return
         key = os.environ.get('GEMINI_API_KEY')
         if not key:
-            self.send_json(503, {'error': 'Personal explanations are unavailable; showing answer-based notes.'})
+            self.send_json(503, {'error': 'Personal explanations are unavailable. Configure GEMINI_API_KEY and try again.'})
             return
         try:
             insights = generate_insights(answers, key)
         except Exception:
-            self.send_json(502, {'error': 'Personal explanations are unavailable; showing answer-based notes.'})
+            self.send_json(502, {'error': 'Gemini could not return valid layer explanations. Please try again.'})
             return
         self.send_json(200, {'insights': insights})
 

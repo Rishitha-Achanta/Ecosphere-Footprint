@@ -28,7 +28,13 @@ function validAnswers(answers) {
     return answers && Object.keys(answers).length === answerNames.length && answerNames.every(key => Number.isFinite(answers[key]) && answers[key] >= 0 && answers[key] <= (key === 'flights' ? 30 : key === 'trash' ? 5 : 4));
 }
 function validInsights(data) {
-    return data && layers.every(key => typeof data[key] === 'string' && data[key].length >= 20 && data[key].length <= 650);
+    return data && layers.every(key => {
+        const text = data[key];
+        if (typeof text !== 'string') return false;
+        const words = text.trim().split(/\s+/).length;
+        const sentences = (text.match(/[^.!?]+[.!?](?=\s|$)/g) || []).length;
+        return words >= 50 && words <= 150 && sentences >= 1 && sentences <= 3;
+    });
 }
 function showInsights(insights) {
     document.querySelectorAll('[data-insight]').forEach(node => { node.textContent = insights[node.dataset.insight]; });
