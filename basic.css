@@ -721,6 +721,222 @@ button > .button-ripple, .button > .button-ripple {
 }
 @media (max-width: 760px) {
     .questionnaire-page .slider-control { margin-top: 24px; }
+    .slider-mark-label { max-width: 96px; font-size: 9px; }
     .cascade-page .layer-note { padding: 18px; font-size: 14px; }
     .cascade-page .layer-note [data-insight] { font-size: 14px; }
+}
+
+/* A bigger answer target with position marks and readable choice labels. */
+.questionnaire-page .slider-control input[type="range"] {
+    height: 44px;
+    margin: 0;
+    cursor: grab;
+    touch-action: pan-y;
+}
+.questionnaire-page .slider-control input[type="range"]:active { cursor: grabbing; }
+.questionnaire-page .slider-control input[type="range"]::-webkit-slider-runnable-track {
+    height: 10px;
+    border-radius: 999px;
+    background: #c4d9e8;
+}
+.questionnaire-page .slider-control input[type="range"]::-webkit-slider-thumb {
+    width: 34px;
+    height: 34px;
+    margin-top: -12px;
+    border: 4px solid #f8fcff;
+    border-radius: 50%;
+    background: #176b8c;
+    box-shadow: 0 3px 10px rgba(18, 54, 83, .3);
+}
+.questionnaire-page .slider-control input[type="range"]::-moz-range-track {
+    height: 10px;
+    border-radius: 999px;
+    background: #c4d9e8;
+}
+.questionnaire-page .slider-control input[type="range"]::-moz-range-thumb {
+    width: 34px;
+    height: 34px;
+    border: 4px solid #f8fcff;
+    border-radius: 50%;
+    background: #176b8c;
+    box-shadow: 0 3px 10px rgba(18, 54, 83, .3);
+}
+.questionnaire-page .slider-control input[type="range"]:focus-visible {
+    outline: 3px solid rgba(20, 107, 128, .35);
+    outline-offset: 5px;
+}
+.slider-mark-rail {
+    position: relative;
+    width: min(calc(100% - 38px), 622px);
+    height: 40px;
+    margin: -3px auto 0;
+    color: #315875;
+}
+.slider-tick {
+    position: absolute;
+    top: 0;
+    width: 2px;
+    height: 8px;
+    border-radius: 2px;
+    background: #6f94ad;
+    transform: translateX(-50%);
+}
+.slider-mark-label {
+    position: absolute;
+    top: 11px;
+    max-width: 130px;
+    color: #315875;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1.35;
+    text-align: center;
+    transform: translateX(-50%);
+}
+.slider-mark-label.is-first { text-align: left; transform: none; }
+.slider-mark-label.is-last { text-align: right; transform: translateX(-100%); }
+.questionnaire-page .slider-output { margin-top: 9px; }
+.quiz-game-link { margin: 20px 0 0; color: #244f73; font-size: 14px; text-align: center; }
+.quiz-game-link a { font-weight: 700; text-underline-offset: 4px; }
+.quiz-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.questionnaire-page .quiz-actions .button-secondary { background: rgba(255, 255, 255, .64); }
+.home-game-link { margin-top: 13px; }
+.cascade-page .end-actions { flex-wrap: wrap; gap: 12px; }
+
+/* Lifestyle story game. */
+.lifestyle-page {
+    --life-ink: #153c5c;
+    --life-muted: #365a72;
+    min-height: 100vh;
+    color: #eff8fb;
+    background: radial-gradient(ellipse at 78% 0%, rgba(71, 150, 171, .28), transparent 38%),
+                linear-gradient(160deg, #143a56 0%, #0c2d47 54%, #071d31 100%) fixed;
+}
+.lifestyle-page .site-header,
+.lifestyle-page .site-footer { border-color: rgba(217, 241, 248, .18); }
+.lifestyle-page .header-note,
+.lifestyle-page .site-footer { color: #c4dce6; }
+.lifestyle-wrap { width: min(980px, calc(100% - 48px)); margin: 0 auto; padding: 55px 0 115px; }
+.life-intro { max-width: 750px; margin: 0 auto 28px; text-align: center; }
+.life-intro .eyebrow { justify-content: center; }
+.life-intro h1 {
+    margin: 0 auto 16px;
+    color: #f2fbff;
+    font-family: "Aptos Display", "Segoe UI Variable", "Segoe UI", sans-serif;
+    font-size: clamp(38px, 6vw, 62px);
+    font-weight: 700;
+    letter-spacing: -.045em;
+    line-height: 1.08;
+}
+.life-intro h1 span { color: #8fe0d3; }
+.life-intro > p:not(.eyebrow) { max-width: 680px; margin: 0 auto; color: #d1e4ed; font-size: 16px; line-height: 1.75; }
+.life-intro .life-disclaimer { margin-top: 9px; color: #a8c6d4; font-size: 12px; }
+.life-nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 25px 0 28px; }
+.lifestyle-page .life-nav .button-secondary,
+.lifestyle-page .life-finish-actions .button-secondary {
+    border-color: rgba(223, 242, 248, .28);
+    background: rgba(231, 247, 251, .1);
+    color: #eff9fc;
+}
+.lifestyle-page .life-nav .button-secondary:hover,
+.lifestyle-page .life-finish-actions .button-secondary:hover { background: rgba(231, 247, 251, .18); }
+.lifestyle-page .button-primary { border-color: transparent; background: #78ddc9; color: #0b2d3b; box-shadow: 0 8px 22px rgba(37, 202, 174, .18); }
+.lifestyle-page .button-primary:hover { background: #9ae9d9; }
+.life-game, .life-empty { width: min(100%, 820px); margin: 0 auto; }
+.life-dashboard { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, .7fr); gap: 14px; }
+.life-day-card, .life-score-card {
+    display: flex;
+    min-height: 125px;
+    flex-direction: column;
+    justify-content: center;
+    padding: 22px 25px;
+    border: 1px solid rgba(224, 245, 251, .16);
+    border-radius: 18px;
+    background: rgba(12, 45, 67, .74);
+    box-shadow: 0 14px 32px rgba(0, 13, 28, .16);
+}
+.life-card-kicker { margin: 0 0 8px; color: #8fe0d3; font-size: 10px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+.life-day-card strong { color: #f4fbff; font-size: 25px; }
+.life-day-card > span:last-child, .life-score-card > span:last-child { margin-top: 5px; color: #b8d1de; font-size: 12px; }
+.life-score-card strong { color: #fff; font-family: "Aptos Display", "Segoe UI Variable", "Segoe UI", sans-serif; font-size: 40px; line-height: 1.05; }
+.life-progress { display: flex; align-items: center; gap: 14px; margin: 19px 3px 20px; color: #c5dae3; font-size: 12px; }
+.life-progress-track { height: 9px; flex: 1; overflow: hidden; border: 1px solid rgba(238, 250, 255, .24); border-radius: 999px; background: rgba(3, 22, 38, .62); }
+.life-progress-track span { display: block; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #53baa9, #a2ebd9); transition: width .25s ease; }
+.life-event, .life-empty, .life-complete {
+    padding: clamp(23px, 4vw, 38px);
+    border: 1px solid rgba(195, 225, 240, .6);
+    border-radius: 22px;
+    background: linear-gradient(145deg, rgba(250, 253, 255, .98), rgba(232, 243, 249, .98));
+    box-shadow: 0 22px 55px rgba(0, 15, 31, .24);
+    color: var(--life-ink);
+}
+.life-event h2, .life-empty h2, .life-complete h2 {
+    margin: 0 0 12px;
+    color: #123653;
+    font-family: "Aptos Display", "Segoe UI Variable", "Segoe UI", sans-serif;
+    font-size: clamp(27px, 4vw, 37px);
+    line-height: 1.2;
+}
+.event-context { margin: 0 0 14px; padding: 14px 16px; border-left: 3px solid #328b8e; border-radius: 0 10px 10px 0; background: #e6f2f7; color: #365a72; font-size: 14px; line-height: 1.65; }
+.event-question { margin: 0 0 17px; color: #173e5c; font-size: 17px; font-weight: 700; line-height: 1.5; }
+.life-choices { display: grid; gap: 10px; }
+.life-choice {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 62px;
+    padding: 11px 15px;
+    border: 1px solid rgba(30, 79, 111, .18);
+    border-radius: 13px;
+    background: #fff;
+    color: #173e5c;
+    cursor: pointer;
+    text-align: left;
+    transition: transform .16s ease, border-color .16s ease, background-color .16s ease, box-shadow .16s ease;
+}
+.life-choice:hover { transform: translateY(-1px); border-color: #4a9ca3; background: #f2fafb; box-shadow: 0 8px 18px rgba(30, 79, 111, .1); }
+.life-choice:focus-visible { outline: 3px solid rgba(35, 131, 142, .35); outline-offset: 2px; }
+.choice-letter { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 50%; background: #e5f1f6; color: #315875; font-size: 12px; font-weight: 800; }
+.choice-text { font-size: 14px; font-weight: 600; line-height: 1.5; }
+.choice-points { justify-self: end; font-size: 12px; white-space: nowrap; }
+.choice-points.is-higher { color: #a3473f; }
+.choice-points.is-lower { color: #187566; }
+.life-hint-area { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 15px; margin-top: 20px; padding-top: 18px; border-top: 1px solid rgba(30, 79, 111, .14); }
+.lifestyle-page .life-hint-area .button-secondary { flex: 0 0 auto; border-color: rgba(30, 79, 111, .22); background: #edf5f8; color: #173e5c; }
+.lifestyle-page .life-hint-area .button-secondary:hover { background: #e1f0f3; }
+.life-hint { flex: 1; margin: 7px 0 0; color: #315875; font-size: 14px; line-height: 1.7; }
+.life-key-help { flex: 0 0 100%; color: #176b8c; font-size: 13px; font-weight: 700; text-underline-offset: 3px; }
+.life-key-help[hidden], #insight-retry[hidden], #gemini-key-help[hidden] { display: none; }
+.insight-recovery { display: grid; justify-items: start; gap: 9px; margin: 10px 0 16px; }
+#insight-retry { min-height: 40px; padding: 9px 14px; border-color: rgba(196, 235, 231, .4); background: rgba(7, 39, 56, .68); color: #e2f3f2; font-size: 12px; }
+#gemini-key-help { max-width: 630px; margin: 0; color: #d6e8e8; font-size: 12px; line-height: 1.7; }
+#gemini-key-help a { color: #9ce6d7; text-underline-offset: 3px; }
+.life-empty { margin-top: 25px; }
+.life-empty > p:not(.life-card-kicker), .life-complete > p { color: var(--life-muted); font-size: 15px; line-height: 1.75; }
+.life-complete h3 { margin: 25px 0 12px; color: #173e5c; font-size: 16px; }
+.life-recap { display: grid; gap: 9px; margin: 0; padding-left: 23px; color: #315875; }
+.life-recap li { padding-left: 4px; line-height: 1.55; }
+.life-recap li span { display: block; }
+.life-recap li strong { display: block; color: #187566; font-size: 12px; }
+.life-finish-actions { display: flex; flex-wrap: wrap; gap: 11px; margin-top: 24px; }
+.lifestyle-page .life-disclaimer { color: #6b8798; font-size: 12px; }
+.lifestyle-page .site-footer { padding-bottom: 45px; }
+@media (max-width: 620px) {
+    .lifestyle-wrap { width: calc(100% - 30px); padding-top: 38px; }
+    .life-dashboard { grid-template-columns: 1fr 1fr; gap: 9px; }
+    .life-day-card, .life-score-card { min-height: 110px; padding: 17px; }
+    .life-day-card strong { font-size: 21px; }
+    .life-score-card strong { font-size: 34px; }
+    .life-card-kicker { font-size: 9px; }
+    .life-event, .life-empty, .life-complete { padding: 22px 17px; }
+    .life-choice { grid-template-columns: 30px minmax(0, 1fr); gap: 10px; padding: 11px; }
+    .choice-points { grid-column: 2; justify-self: start; }
+    .life-hint-area { flex-direction: column; gap: 7px; }
+}
+@media (max-width: 520px) {
+    .slider-mark-label { max-width: 78px; font-size: 8px; line-height: 1.25; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .life-progress-track span, .life-choice { transition: none; }
 }

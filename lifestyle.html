@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#123653">
+    <meta name="description" content="Play through everyday choices shaped by your Ecosphere questionnaire answers.">
+    <title>Little Planet Life — Ecosphere</title>
+    <link rel="stylesheet" href="basic.css">
+    <script src="game.js" defer></script>
+</head>
+<body class="lifestyle-page">
+    <header class="site-header">
+        <a class="brand" href="homepage.html" aria-label="Ecosphere home"><span class="brand-mark" aria-hidden="true">◉</span> ECOSPHERE</a>
+        <span class="header-note">A life shaped by everyday choices</span>
+    </header>
+
+    <main class="lifestyle-wrap">
+        <section class="life-intro">
+            <p class="eyebrow"><span class="eyebrow-line"></span> LITTLE PLANET LIFE</p>
+            <h1>Your everyday life, <span>one choice at a time.</span></h1>
+            <p>Your starting impact score comes from the resource-use part of your questionnaire, and all 12 answers shape the everyday scenes. Higher points mean more environmental pressure; lower-impact choices subtract points.</p>
+            <p class="life-disclaimer">Game points are illustrative, not a scientific footprint measurement.</p>
+        </section>
+
+        <nav class="life-nav" aria-label="Ecosphere pages">
+            <a class="button button-secondary" href="homepage.html">Home</a>
+            <a class="button button-secondary" href="questionnaire.html">Questionnaire</a>
+            <a class="button button-secondary" href="cascade.html">Your cascade</a>
+        </nav>
+
+        <section class="life-empty" id="game-empty" hidden>
+            <p class="life-card-kicker">YOUR STORY STARTS WITH A CHECK-IN</p>
+            <h2>Answer the 12 questions first</h2>
+            <p>The game uses your answers to personalize its everyday scenes; resource-use answers also set your starting impact score.</p>
+            <a class="button button-primary" href="questionnaire.html">Go to questionnaire <span aria-hidden="true">→</span></a>
+        </section>
+
+        <section class="life-game" id="game-panel" hidden aria-label="Little Planet Life game">
+            <div class="life-dashboard">
+                <div class="life-day-card">
+                    <span class="life-card-kicker">YOUR SIMULATED LIFE</span>
+                    <strong id="game-day">Day 1 of 4</strong>
+                    <span id="game-decision">Decision 1 of 3</span>
+                </div>
+                <div class="life-score-card" aria-live="polite">
+                    <span class="life-card-kicker">IMPACT SCORE</span>
+                    <strong id="game-score">0</strong>
+                    <span>Starting score comes from your check-in</span>
+                </div>
+            </div>
+
+            <div class="life-progress" role="group" aria-label="Game progress">
+                <div class="life-progress-track" role="progressbar" aria-label="Decisions completed" aria-valuemin="0" aria-valuemax="12" aria-valuenow="0" id="game-progress-track"><span id="game-progress-fill"></span></div>
+                <span id="game-progress-label">0 of 12 decisions</span>
+            </div>
+
+            <article class="life-event" id="life-event">
+                <p class="life-card-kicker" id="event-kicker">DAY 1 · DECISION 1 OF 3</p>
+                <h2 id="event-title" tabindex="-1"></h2>
+                <p class="event-context" id="event-context"></p>
+                <p class="event-question" id="event-question"></p>
+                <div class="life-choices" id="life-choices" role="group" aria-label="Choose what to do"></div>
+                <div class="life-hint-area">
+                    <button class="button button-secondary" id="hint-button" type="button">Get a Gemini hint <span aria-hidden="true">✧</span></button>
+                    <p class="life-hint" id="hint-output" aria-live="polite"></p>
+                    <a class="life-key-help" id="hint-key-help" href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" hidden>Create or replace the Gemini API key in Google AI Studio</a>
+                </div>
+            </article>
+
+            <section class="life-complete" id="game-complete" hidden aria-live="polite">
+                <p class="life-card-kicker">FOUR DAYS, TWELVE DECISIONS</p>
+                <h2 id="complete-title" tabindex="-1">Your story keeps moving.</h2>
+                <p>Your final impact score is <strong id="final-score">0</strong>. You began at <span id="starting-score">0</span>; your choices changed the score by <span id="score-change">0</span> points.</p>
+                <p class="life-disclaimer">A higher score represents more environmental pressure in this game, not a measured personal footprint.</p>
+                <h3>Your choices</h3>
+                <ol class="life-recap" id="game-recap"></ol>
+                <div class="life-finish-actions">
+                    <button class="button button-primary" id="restart-game" type="button">Play again <span aria-hidden="true">↻</span></button>
+                    <a class="button button-secondary" href="cascade.html">See your cascade <span aria-hidden="true">→</span></a>
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <footer class="site-footer"><span>ECOSPHERE</span><span>Small choices. Shared waters. One living planet.</span></footer>
+</body>
+</html>

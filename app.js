@@ -12,7 +12,33 @@ if (form) {
     let activeQuestion = 0;
     cards.forEach((card, index) => { card.tabIndex = -1; card.hidden = index !== 0; });
     cards.forEach(card => card.querySelectorAll('input[type="range"]').forEach(slider => {
-        slider.setAttribute('aria-valuetext', slider.dataset.labels.split('|')[Number(slider.value)]);
+        const labels = slider.dataset.labels.split('|');
+        slider.setAttribute('aria-valuetext', labels[Number(slider.value)]);
+        const rail = document.createElement('div');
+        rail.className = 'slider-mark-rail';
+        rail.setAttribute('aria-hidden', 'true');
+        labels.forEach((label, index) => {
+            const tick = document.createElement('span');
+            tick.className = 'slider-tick';
+            tick.title = label;
+            tick.style.left = `${index / (labels.length - 1) * 100}%`;
+            rail.append(tick);
+        });
+        const labelSlots = window.matchMedia('(max-width: 520px)').matches ? 3 : 5;
+        const visibleCount = Math.min(labelSlots, labels.length);
+        const visibleIndexes = visibleCount === labels.length
+            ? labels.map((_, index) => index)
+            : Array.from({length: visibleCount}, (_, slot) => Math.round(slot * (labels.length - 1) / (visibleCount - 1)));
+        visibleIndexes.forEach(index => {
+            const markerLabel = document.createElement('span');
+            markerLabel.className = 'slider-mark-label';
+            if (index === 0) markerLabel.classList.add('is-first');
+            if (index === labels.length - 1) markerLabel.classList.add('is-last');
+            markerLabel.textContent = labels[index];
+            markerLabel.style.left = `${index / (labels.length - 1) * 100}%`;
+            rail.append(markerLabel);
+        });
+        slider.closest('.slider-control').insertAdjacentElement('afterend', rail);
     }));
     submitPanel.hidden = true;
     const controls = document.createElement('div');
@@ -125,6 +151,10 @@ async function personalize() {
     const scoreNode = document.querySelector('#score-value');
     if (!scoreNode) return;
     const status = document.querySelector('#insight-status');
+    const retryButton = document.querySelector('#insight-retry');
+    const keyHelp = document.querySelector('#gemini-key-help');
+    if (retryButton) retryButton.hidden = true;
+    if (keyHelp) keyHelp.hidden = true;
     let answers;
     try { answers = JSON.parse(localStorage.getItem('ecosphere-answers')); } catch { /* Check-in may be absent. */ }
     if (!validAnswers(answers)) {
@@ -150,25 +180,40 @@ async function personalize() {
     } catch { /* Caching is optional. */ }
     status.textContent = 'Connecting your choices to each landscape…';
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000);
+    const timeout = setTimeout(() => controller.abort(), 85000);
     try {
-        if (location.protocol === 'file:') throw new Error('Server required');
+        if (location.protocol === 'file:') throw new Error('Open the site through the local Python server (python server.py) to connect to Gemini.');
         const response = await fetch('/api/insights', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({answers}), signal: controller.signal});
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || `Gemini request failed (${response.status}).`);
-        if (!validInsights(data.insights)) throw new Error('Invalid response');
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            const failure = new Error(data.error || `Gemini request failed (${response.status}).`);
+            failure.recovery = data.recovery;
+            throw failure;
+        }
+        if (!validInsights(data.insights)) {
+            const failure = new Error('Gemini returned an incomplete explanation. Retry to generate it again.');
+            failure.recovery = 'retry';
+            throw failure;
+        }
         showInsights(data.insights);
         status.textContent = 'Your personal connections · generated with Gemini';
         try { localStorage.setItem('ecosphere-insights', JSON.stringify({fingerprint, insights: data.insights})); } catch { /* Display still works without cache. */ }
     } catch (error) {
         const reason = error instanceof Error ? error.message : 'Unknown Gemini error.';
-        status.textContent = `Personalized ripple generation failed: ${reason}`;
+        status.textContent = error?.name === 'AbortError'
+            ? 'Gemini took too long to respond. Check your connection and retry.'
+            : error instanceof TypeError
+                ? 'Could not reach the local server. Confirm python server.py is running, then retry.'
+                : reason;
         console.warn('Gemini ripple generation failed:', error);
         document.querySelectorAll('[data-insight]').forEach(node => {
-            node.textContent = 'Your answers are saved, but this layer’s tailored reflection could not load. Reload the page to try again.';
+            node.textContent = 'Your answers are saved. The tailored reflection is temporarily unavailable; use the recovery options above to try again.';
         });
+        if (retryButton) retryButton.hidden = false;
+        if (keyHelp && error?.recovery === 'replace_key') keyHelp.hidden = false;
     } finally { clearTimeout(timeout); }
 }
+document.querySelector('#insight-retry')?.addEventListener('click', () => personalize());
 personalize();
 document.querySelector('#back-to-top')?.addEventListener('click', () => {
     const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
