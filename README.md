@@ -13,7 +13,7 @@ python server.py
 
 You can also put `GEMINI_API_KEY=your-rotated-key` in a local `.env` file in the project root; the server loads it, and Git ignores it.
 
-Open http://localhost:8000. Optionally set `GEMINI_MODEL` (default: `gemini-2.5-flash`) and `PORT` (default: `8000`). The API key stays on the server and is not sent to browser code. Do not commit API keys to the project.
+Open http://localhost:8000. The server uses `gemini-3.8-flash` by default; optionally set `GEMINI_MODEL` and `PORT` (default: `8000`). The API key stays on the server and is not sent to browser code. Do not commit API keys to the project.
 
 Opening the HTML directly does not provide Gemini explanations; run the local server instead. Generated insights are cached in the browser for the submitted answers. Submitting the questionnaire again clears that cache.
 

@@ -77,7 +77,7 @@ twilight: trash, shopping, secondhand purchases, electronics, and plastics; conn
 deep: flights, gasoline transport, high-energy appliances, meat, and showers; describe indirect links through emissions, ocean heat, and carbon storage.
 floor: bring together all answers, especially waste, chemical handling, plastics, and product lifetimes, with one practical next step.
 Never imply that more frequent handling of household chemicals is itself harmful; focus on proper storage and disposal. Dishwashers can use less water than handwashing when efficiently loaded. Return only the six-key JSON object.
-IMPORTANT FORMAT OVERRIDE: each value must be 50 to 150 words and 1 to 3 sentences. Make each response tailored to the user's exact answer labels and to the specific environment named by its key. Use a clear chain: selected action, pathway into or effect on this layer, plausible layer-specific damage or pressure, and a realistic action that prevents, reduces, or helps repair it. Include the user's actual choice and frequency where relevant. Only mention an answer when it has a credible effect on this layer; explain the pathway and whether it is direct or indirect. Never pad with general environmental advice or repeat the same consequence at every layer. Address all relevant answers across the six responses without forcing irrelevant details into a layer. Be concrete without guilt, certainty, or invented emissions numbers. Household chemical handling frequency alone is not harmful; for waterways and seafloor, discuss pollution only if products are disposed of improperly, and recommend safe storage and local disposal guidance. Efficiently loaded dishwashers can save water compared with handwashing.
+IMPORTANT FORMAT OVERRIDE: each value must be 50 to 150 words and 1 to 3 sentences. Make each response tailored to the user's exact answer labels and to the specific environment named by its key. Use a clear chain: selected action, pathway into or effect on this layer, plausible layer-specific damage or pressure, and a realistic action that prevents, reduces, or helps repair it. Include the user's actual choice and frequency where relevant. Only mention an answer when it has a credible effect on this layer; explain the pathway and whether it is direct or indirect. Never pad with general environmental advice or repeat the same consequence at every layer. Address all relevant answers across the six responses without forcing irrelevant details into a layer. Be concrete without guilt, certainty, or invented emissions numbers. Household chemical handling frequency alone is not harmful; for waterways and seafloor, discuss pollution only if products are disposed of improperly, and recommend safe storage and local disposal guidance. Efficiently loaded dishwashers can save water compared with handwashing. Use plain prose only, with no bullets, headings, or markdown inside values.
 Layer-specific focus:
 - sky/stratosphere: the ozone layer shields Earth from UV. The survey does not measure ozone-depleting substances, and gasoline travel, flights, appliances, diet, or showers do not directly damage ozone. Do not imply otherwise. If connecting these choices to the sky, describe their climate emissions as a separate atmospheric issue and give climate-focused steps; do not claim those steps repair ozone depletion.
 - air/troposphere: connect the user's gasoline travel, flight hours, high-energy appliance use, and beef/lamb frequency to combustion, electricity demand, and food-production emissions that affect air quality or climate. Recommend relevant options such as fewer gasoline trips, efficient appliance use, or replacing some beef/lamb meals.
@@ -86,15 +86,21 @@ Layer-specific focus:
 - deep ocean: focus on indirect warming and carbon-cycle pathways from the user's fuel travel, flight hours, high-energy appliances, and meat choices. Do not claim household actions directly reach or poison deep-sea life; explain climate links and relevant emissions reductions.
 - seafloor/floor: focus on sinking debris and improperly disposed chemicals reaching benthic habitats, plus indirect climate pressure. Tie the explanation to the user's trash/plastic/chemical and product-lifetime answers, and recommend preventing litter, safe disposal, reuse, or local shoreline/seafloor restoration only where appropriate.
 Selected answers (all twelve questions): ''' + json.dumps(answers)
-    body = {'contents': [{'parts': [{'text': prompt}]}], 'generationConfig': {'responseMimeType': 'application/json', 'responseJsonSchema': schema, 'maxOutputTokens': 3000, 'temperature': 0.35}}
-    model = os.environ.get('GEMINI_MODEL', 'gemini-2.5-flash')
+    body = {'contents': [{'parts': [{'text': prompt}]}], 'generationConfig': {'responseMimeType': 'application/json', 'responseJsonSchema': schema, 'maxOutputTokens': 3000, 'thinkingConfig': {'thinkingLevel': 'low'}}}
+    model = os.environ.get('GEMINI_MODEL', 'gemini-3.8-flash')
     if not re.fullmatch(r'[a-zA-Z0-9._-]+', model):
         raise ValueError('Invalid model name.')
     request = Request(f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent', data=json.dumps(body).encode(), headers={'Content-Type': 'application/json', 'x-goog-api-key': api_key})
     with urlopen(request, timeout=25) as response:
         result = json.load(response)
-    parts = result['candidates'][0]['content']['parts']
-    return validate_insights(json.loads(''.join(part.get('text', '') for part in parts if not part.get('thought'))))
+    candidates = result.get('candidates') or []
+    if not candidates:
+        raise ValueError('Gemini returned no explanation. Check the model response and try again.')
+    parts = (candidates[0].get('content') or {}).get('parts') or []
+    response_text = ''.join(part.get('text', '') for part in parts if not part.get('thought'))
+    if not response_text:
+        raise ValueError('Gemini returned an empty explanation. Try again.')
+    return validate_insights(json.loads(response_text))
 
 
 class Handler(SimpleHTTPRequestHandler):

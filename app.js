@@ -139,7 +139,7 @@ async function personalize() {
     document.querySelector('#score-band').textContent = score < 17 ? 'Lower reported-use range' : score < 34 ? 'Middle reported-use range' : 'Higher reported-use range';
     document.querySelector('#result-summary').textContent = 'Your 12 answers shape these layer-by-layer ripples. The reflection score uses 10 resource-use answers; dishwashing and chemical-handling frequency inform your ripples but are not scored because method and disposal details matter. This is not a calculated footprint.';
     document.querySelectorAll('[data-insight]').forEach(node => { node.textContent = 'Preparing a layer-specific explanation from your answers…'; });
-    const fingerprint = JSON.stringify({version: 3, answers: answerNames.map(key => answers[key])});
+    const fingerprint = JSON.stringify({version: 4, answers: answerNames.map(key => answers[key])});
     try {
         const cached = JSON.parse(localStorage.getItem('ecosphere-insights'));
         if (cached?.fingerprint === fingerprint && validInsights(cached.insights)) {
@@ -163,7 +163,10 @@ async function personalize() {
     } catch (error) {
         const reason = error instanceof Error ? error.message : 'Unknown Gemini error.';
         status.textContent = `Personalized ripple generation failed: ${reason}`;
-        document.querySelectorAll('[data-insight]').forEach(node => { node.textContent = `No tailored explanation was returned for this layer. ${reason}`; });
+        console.warn('Gemini ripple generation failed:', error);
+        document.querySelectorAll('[data-insight]').forEach(node => {
+            node.textContent = 'Your answers are saved, but this layer’s tailored reflection could not load. Reload the page to try again.';
+        });
     } finally { clearTimeout(timeout); }
 }
 personalize();

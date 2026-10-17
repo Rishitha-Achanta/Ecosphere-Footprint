@@ -684,3 +684,43 @@ button > .button-ripple, .button > .button-ripple {
     .questionnaire-page .quiz-step-controls .step-hint { font-size: 11px; }
     .questionnaire-page .quiz-submit { align-items: stretch; }
 }
+
+/* Keep the answer slider visually centered and the generated layer copy readable. */
+.questionnaire-page .slider-control {
+    width: min(100%, 660px);
+    margin: 30px auto 0;
+}
+.questionnaire-page .slider-control input[type="range"] { justify-self: center; }
+.cascade-page .insight-status {
+    max-width: 620px;
+    overflow-wrap: anywhere;
+}
+.cascade-page .insight-status:empty { display: none; }
+.cascade-page .layer-content { min-width: 0; }
+.cascade-page .layer-note {
+    min-width: 0;
+    max-width: 100%;
+    align-items: flex-start;
+    border: 1px solid rgba(196, 235, 231, .2);
+    border-left: 3px solid #7ce0cc;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(5, 27, 43, .78), rgba(10, 48, 66, .68));
+    color: #f0f8fb;
+    font-size: 15px;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+}
+.cascade-page .layer-note > span:first-child { flex: 0 0 auto; }
+.cascade-page .layer-note > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+.cascade-page .layer-note [data-insight] {
+    display: block;
+    color: #f0f8fb;
+    font-size: 15px;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+}
+@media (max-width: 760px) {
+    .questionnaire-page .slider-control { margin-top: 24px; }
+    .cascade-page .layer-note { padding: 18px; font-size: 14px; }
+    .cascade-page .layer-note [data-insight] { font-size: 14px; }
+}
