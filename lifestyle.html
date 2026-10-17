@@ -20,8 +20,8 @@
             <p class="eyebrow"><span class="eyebrow-line"></span> LITTLE PLANET LIFE</p>
             <img class="life-rocket-art" src="assets/Screenshot_2026-10-17_162826-removebg-preview.png" alt="" width="150" height="150" aria-hidden="true">
             <h1>Your everyday life, <span>one choice at a time.</span></h1>
-            <p>Your starting impact score comes from the resource-use part of your questionnaire, and all 12 answers shape the everyday scenes. Higher points mean more environmental pressure; lower-impact choices subtract points.</p>
-            <p class="life-disclaimer">Game points are illustrative, not a scientific footprint measurement.</p>
+            <p>Your starting impact score comes from the resource-use part of your questionnaire, and all 12 answers shape the everyday scenes. Higher scores represent more environmental pressure.</p>
+            <p class="life-disclaimer">Scores are illustrative, not a scientific footprint measurement.</p>
         </section>
 
         <nav class="life-nav" aria-label="Ecosphere pages">
@@ -29,6 +29,22 @@
             <a class="button button-secondary" href="questionnaire.html">Questionnaire</a>
             <a class="button button-secondary" href="cascade.html">Your cascade</a>
         </nav>
+
+        <section class="life-empty life-setup" id="game-setup" hidden>
+            <p class="life-card-kicker">SET YOUR TIMELINE</p>
+            <h2>How many days would you like to play?</h2>
+            <p>Each day brings three personalized everyday decisions, based on your questionnaire.</p>
+            <label class="day-picker" for="game-days">
+                <span>Days in your story</span>
+                <select id="game-days" name="game-days">
+                    <option value="1">1 day · 3 decisions</option>
+                    <option value="2">2 days · 6 decisions</option>
+                    <option value="3">3 days · 9 decisions</option>
+                    <option value="4" selected>4 days · 12 decisions</option>
+                </select>
+            </label>
+            <button class="button button-primary" id="start-game" type="button">Begin your story <span aria-hidden="true">→</span></button>
+        </section>
 
         <section class="life-empty" id="game-gate" hidden>
             <p class="life-card-kicker">THE JOURNEY CONTINUES BELOW</p>
@@ -83,22 +99,18 @@
                 <p class="event-question" id="event-question"></p>
                 <p class="game-action-status" id="game-action-status" aria-live="polite"></p>
                 <div class="life-choices" id="life-choices" role="group" aria-label="Choose what to do"></div>
-                <div class="life-hint-area">
-                    <button class="button button-secondary" id="hint-button" type="button">Get a Gemini hint <span aria-hidden="true">✧</span></button>
-                    <p class="life-hint" id="hint-output" aria-live="polite"></p>
-                    <a class="life-key-help" id="hint-key-help" href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" hidden>Create or replace the Gemini API key in Google AI Studio</a>
-                </div>
             </article>
 
             <section class="life-complete" id="game-complete" hidden aria-live="polite">
                 <p class="life-card-kicker">FOUR DAYS, TWELVE DECISIONS</p>
                 <h2 id="complete-title" tabindex="-1">Your story keeps moving.</h2>
-                <p>Your final impact score is <strong id="final-score">0</strong>. You began at <span id="starting-score">0</span>; your choices changed the score by <span id="score-change">0</span> points.</p>
+                <p>Your final impact score is <strong id="final-score">0</strong>. You began at <span id="starting-score">0</span>, and your decisions shaped this result.</p>
                 <p class="life-disclaimer">A higher score represents more environmental pressure in this game, not a measured personal footprint.</p>
                 <h3>Your choices</h3>
                 <ol class="life-recap" id="game-recap"></ol>
                 <div class="life-finish-actions">
                     <button class="button button-primary" id="restart-game" type="button">Play again <span aria-hidden="true">↻</span></button>
+                    <button class="button button-secondary" id="new-game-length" type="button">Choose a new timeline</button>
                     <a class="button button-secondary" href="cascade.html">See your cascade <span aria-hidden="true">→</span></a>
                 </div>
             </section>

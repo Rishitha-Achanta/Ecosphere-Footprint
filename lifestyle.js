@@ -8,16 +8,16 @@ const gameEntryKey = 'ecosphere-life-unlocked';
 const gamePanel = document.querySelector('#game-panel');
 const gameGate = document.querySelector('#game-gate');
 const gameEmpty = document.querySelector('#game-empty');
+const gameSetup = document.querySelector('#game-setup');
 const gameLoading = document.querySelector('#game-loading');
 const gameError = document.querySelector('#game-error');
 const gameErrorText = document.querySelector('#game-error-text');
 const gameRetry = document.querySelector('#game-retry');
-const hintButton = document.querySelector('#hint-button');
-const hintOutput = document.querySelector('#hint-output');
-const hintKeyHelp = document.querySelector('#hint-key-help');
 const gameActionStatus = document.querySelector('#game-action-status');
+const gameDays = document.querySelector('#game-days');
 let activeGameId = '';
 let gameRequestBusy = false;
+let selectedDays = Number(gameDays?.value || 4);
 
 function sessionValue(key) {
     try { return sessionStorage.getItem(key) || ''; } catch { return ''; }
@@ -72,27 +72,18 @@ async function postGame(path, payload) {
     return data;
 }
 
-function scoreText(value) {
-    return value > 0 ? `+${value}` : String(value);
-}
-
-function showHintMessage(message, isError = false) {
-    hintOutput.textContent = message;
-    hintOutput.classList.toggle('is-error', isError);
-}
-
 function choiceButton(choice, index) {
     const button = document.createElement('button');
     button.className = 'life-choice';
     button.type = 'button';
-    button.setAttribute('aria-label', `${choice.text}; ${scoreText(choice.points)} impact points`);
-    button.innerHTML = `<span class="choice-letter">${String.fromCharCode(65 + index)}</span><span class="choice-text"></span><strong class="choice-points ${choice.points > 0 ? 'is-higher' : 'is-lower'}">${scoreText(choice.points)} points</strong>`;
+    button.setAttribute('aria-label', choice.text);
+    button.innerHTML = `<span class="choice-letter">${String.fromCharCode(65 + index)}</span><span class="choice-text"></span>`;
     button.querySelector('.choice-text').textContent = choice.text;
     button.addEventListener('click', () => chooseOption(index));
     return button;
 }
 
-function renderGame(game, lastChange = null, moveFocus = false) {
+function renderGame(game, announceChange = false, moveFocus = false) {
     const progressTrack = document.querySelector('#game-progress-track');
     const progressFill = document.querySelector('#game-progress-fill');
     const progressLabel = document.querySelector('#game-progress-label');
@@ -109,16 +100,13 @@ function renderGame(game, lastChange = null, moveFocus = false) {
         document.querySelector('#game-decision').textContent = `${game.total} decisions made`;
         document.querySelector('#final-score').textContent = game.score;
         document.querySelector('#starting-score').textContent = game.starting_score;
-        document.querySelector('#score-change').textContent = scoreText(game.score_change);
         const recap = document.querySelector('#game-recap');
         recap.replaceChildren();
         game.actions.forEach(action => {
             const item = document.createElement('li');
             const decision = document.createElement('span');
-            const points = document.createElement('strong');
             decision.textContent = `${action.title}: ${action.choice}`;
-            points.textContent = `${scoreText(action.points)} impact points`;
-            item.append(decision, points);
+            item.append(decision);
             recap.append(item);
         });
         if (moveFocus) document.querySelector('#complete-title').focus({preventScroll: true});
@@ -128,7 +116,7 @@ function renderGame(game, lastChange = null, moveFocus = false) {
     const {scene} = game;
     document.querySelector('#game-complete').hidden = true;
     document.querySelector('#life-event').hidden = false;
-    document.querySelector('#game-day').textContent = `Day ${game.day} of 4`;
+    document.querySelector('#game-day').textContent = `Day ${game.day} of ${game.days}`;
     document.querySelector('#game-decision').textContent = `Decision ${game.decision} of 3`;
     document.querySelector('#event-kicker').textContent = `DAY ${game.day} · DECISION ${game.decision} OF 3`;
     document.querySelector('#event-title').textContent = scene.title;
@@ -136,22 +124,31 @@ function renderGame(game, lastChange = null, moveFocus = false) {
     document.querySelector('#event-question').textContent = scene.question;
     const choices = document.querySelector('#life-choices');
     choices.replaceChildren(...scene.choices.map(choiceButton));
-    hintButton.disabled = false;
-    hintButton.textContent = 'Get a Gemini hint';
-    hintKeyHelp.hidden = true;
-    gameActionStatus.textContent = lastChange === null ? '' : `Your last choice changed the score by ${scoreText(lastChange)} point${Math.abs(lastChange) === 1 ? '' : 's'}.`;
-    showHintMessage('');
+    gameActionStatus.textContent = announceChange ? 'Your impact score has been updated.' : '';
     if (moveFocus) document.querySelector('#event-title').focus({preventScroll: true});
 }
 
-async function openGame() {
+function showGameSetup() {
+    if (!getQuestionnaireAnswers()) {
+        setVisible(gameEmpty, true);
+        return;
+    }
+    setVisible(gamePanel, false);
+    setVisible(gameError, false);
+    setVisible(gameLoading, false);
+    setVisible(gameSetup, true);
+}
+
+async function openGame(days = selectedDays) {
     const answers = getQuestionnaireAnswers();
     if (!answers) {
         setVisible(gameLoading, false);
         setVisible(gameEmpty, true);
         return;
     }
+    selectedDays = Number(days);
     setVisible(gameError, false);
+    setVisible(gameSetup, false);
     setVisible(gameLoading, true);
     try {
         let response;
@@ -167,7 +164,7 @@ async function openGame() {
             }
         }
         if (!activeGameId) {
-            response = await postGame('/api/game/start', {entry: 'cascade-bottom', answers});
+            response = await postGame('/api/game/start', {entry: 'cascade-bottom', answers, days: selectedDays});
             activeGameId = response.game_id;
             setSessionValue(gameIdKey, activeGameId);
         }
@@ -185,30 +182,16 @@ async function chooseOption(choiceIndex) {
     document.querySelectorAll('.life-choice').forEach(button => { button.disabled = true; });
     try {
         const response = await postGame('/api/game/choose', {game_id: activeGameId, choice_index: choiceIndex});
-        renderGame(response.game, response.last_change, true);
+        renderGame(response.game, true, true);
     } catch (error) {
-        showHintMessage(error instanceof Error ? error.message : 'Your choice could not be saved. Please try again.', true);
-        document.querySelectorAll('.life-choice').forEach(button => { button.disabled = false; });
-    } finally {
-        gameRequestBusy = false;
-    }
-}
-
-async function requestHint() {
-    if (!activeGameId || gameRequestBusy) return;
-    gameRequestBusy = true;
-    hintButton.disabled = true;
-    hintButton.textContent = 'Asking Gemini…';
-    showHintMessage('Asking Gemini for a hint based on your answers…');
-    try {
-        const response = await postGame('/api/game/hint', {game_id: activeGameId});
-        showHintMessage(response.hint);
-        hintButton.textContent = 'Hint received';
-    } catch (error) {
-        showHintMessage(error instanceof Error ? error.message : 'Gemini could not return a hint. Try again.', true);
-        hintKeyHelp.hidden = error?.recovery !== 'replace_key';
-        hintButton.disabled = false;
-        hintButton.textContent = 'Try hint again';
+        if (error?.recovery === 'restart_game') {
+            activeGameId = '';
+            removeSessionValue(gameIdKey);
+            await openGame(selectedDays);
+        } else {
+            gameActionStatus.textContent = error instanceof Error ? error.message : 'Your choice could not be saved. Please try again.';
+            document.querySelectorAll('.life-choice').forEach(button => { button.disabled = false; });
+        }
     } finally {
         gameRequestBusy = false;
     }
@@ -223,7 +206,13 @@ async function restartGame() {
         const response = await postGame('/api/game/restart', {game_id: activeGameId});
         renderGame(response.game, null, true);
     } catch (error) {
-        showGameError(error instanceof Error ? error.message : 'The game could not restart. Please try again.');
+        if (error?.recovery === 'restart_game') {
+            activeGameId = '';
+            removeSessionValue(gameIdKey);
+            await openGame(selectedDays);
+        } else {
+            showGameError(error instanceof Error ? error.message : 'The game could not restart. Please try again.');
+        }
     } finally {
         gameRequestBusy = false;
         restartButton.disabled = false;
@@ -241,10 +230,19 @@ function beginLifestyle() {
         setVisible(gameGate, true);
         return;
     }
-    openGame();
+    if (sessionValue(gameIdKey)) {
+        openGame();
+    } else {
+        showGameSetup();
+    }
 }
 
-hintButton?.addEventListener('click', requestHint);
 document.querySelector('#restart-game')?.addEventListener('click', restartGame);
-gameRetry?.addEventListener('click', openGame);
+document.querySelector('#start-game')?.addEventListener('click', () => openGame(Number(gameDays.value)));
+document.querySelector('#new-game-length')?.addEventListener('click', () => {
+    activeGameId = '';
+    removeSessionValue(gameIdKey);
+    showGameSetup();
+});
+gameRetry?.addEventListener('click', () => openGame(selectedDays));
 beginLifestyle();
