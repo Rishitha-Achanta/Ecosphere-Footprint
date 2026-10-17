@@ -1,14 +1,22 @@
-const answerNames = ['transport', 'flights', 'diet', 'local-food', 'energy', 'temperature', 'packaging', 'waste', 'water', 'shopping'];
+const answerNames = ['transport', 'appliances', 'flights', 'diet', 'trash', 'shopping', 'secondhand', 'electronics', 'dishes', 'showers', 'plastics', 'chemicals'];
 const layers = ['sky', 'air', 'water', 'twilight', 'deep', 'floor'];
 const form = document.querySelector('#footprint-form');
 if (form) {
+    const flightRange = form.querySelector('[name="flight-hours"]');
+    const flightOutput = document.querySelector('#flight-hours-value');
+    const updateFlightLabel = () => { flightOutput.value = `${flightRange.value} hours`; flightOutput.textContent = flightOutput.value; };
+    flightRange.addEventListener('input', () => {
+        form.querySelector('[name="flights"]').checked = false;
+        updateFlightLabel();
+    });
+    form.querySelector('[name="flights"]').addEventListener('change', () => { flightRange.value = 2; updateFlightLabel(); });
     form.addEventListener('submit', (event) => {
         event.preventDefault();
         if (!form.reportValidity()) return;
-        const answers = Object.fromEntries(Array.from(new FormData(form), ([key, value]) => [key, Number(value)]));
+        const submitted = new FormData(form);
+        const answers = Object.fromEntries(answerNames.map(key => [key, key === 'flights' ? (submitted.get('flights') === '0' ? 0 : Number(submitted.get('flight-hours'))) : Number(submitted.get(key))]));
         try {
             localStorage.setItem('ecosphere-answers', JSON.stringify(answers));
-            localStorage.setItem('ecosphere-score', String(Object.values(answers).reduce((sum, n) => sum + n, 0)));
             localStorage.removeItem('ecosphere-insights');
             navigateAfterRipple('cascade.html');
         } catch {
@@ -16,19 +24,8 @@ if (form) {
         }
     });
 }
-
-function fallbackInsights(a) {
-    return {
-        sky: `${a.flights === 0 ? 'You said you do not usually fly, avoiding the emissions associated with those journeys.' : 'Your reported flights connect to climate change through aviation emissions.'} This is different from depletion of the protective ozone layer pictured above.`,
-        air: `${['Your walking, cycling, or transit routine can reduce demand for fuel compared with driving alone.', 'Your shared rides or occasional small-car trips can reduce fuel use compared with frequent solo driving.', 'Driving most days connects your routine to transport emissions, especially when the vehicle burns fuel.', 'Using a larger vehicle most days can require more energy per trip than smaller alternatives.'][a.transport]} The air, forests, and climate around you share that connection.`,
-        water: `${a.packaging <= 1 ? 'Your limited use of disposable packaging helps reduce the amount of material that could escape into waterways.' : 'The packaging you bring home becomes waste that needs careful disposal to keep it out of waterways.'} The reef and fish here depend on healthy coastal waters.`,
-        twilight: `${a.waste === 0 ? 'You recycle and compost when possible, helping keep useful materials out of mixed trash.' : a.waste <= 2 ? 'Your recycling routine helps recover accepted materials when they are sorted correctly.' : 'You said most waste goes into the trash; checking local recycling options could be a useful next step.'} Preventing litter on land helps limit the debris that can travel into ocean habitats.`,
-        deep: `${['Your efficient or renewable-powered home can reduce the emissions associated with household energy.', 'The efficient features in your home can reduce energy demand.', 'You noted room to improve home efficiency; reducing wasted heating or cooling can lower energy demand.', 'You are unsure about your home efficiency or think it could improve; checking it is a useful first step.'][a.energy]} Those emissions connect indirectly to ocean warming and the deep sea’s long-term carbon cycle.`,
-        floor: `${a.shopping <= 1 ? 'Your less frequent purchases can reduce demand for new materials and manufacturing.' : 'Buying clothes or gadgets often increases demand for materials and manufacturing; keeping one item in use longer is a practical next step.'} Resource use on land connects indirectly to the climate and waste pressures that reach marine ecosystems.`
-    };
-}
 function validAnswers(answers) {
-    return answers && answerNames.every(key => Number.isInteger(answers[key]) && answers[key] >= 0 && answers[key] <= 3);
+    return answers && Object.keys(answers).length === answerNames.length && answerNames.every(key => Number.isFinite(answers[key]) && answers[key] >= 0 && answers[key] <= (key === 'flights' ? 30 : key === 'trash' ? 5 : 4));
 }
 function validInsights(data) {
     return data && layers.every(key => typeof data[key] === 'string' && data[key].length >= 20 && data[key].length <= 650);
@@ -41,18 +38,17 @@ async function personalize() {
     if (!scoreNode) return;
     const status = document.querySelector('#insight-status');
     let answers;
-    try { answers = JSON.parse(localStorage.getItem('ecosphere-answers')); } catch { /* Generic journey remains available. */ }
+    try { answers = JSON.parse(localStorage.getItem('ecosphere-answers')); } catch { /* Check-in may be absent. */ }
     if (!validAnswers(answers)) {
         status.textContent = 'Complete the check-in to add your own story to these landscapes.';
-        document.querySelector('#score-band').textContent = 'Start with the 10 questions';
+        document.querySelector('#score-band').textContent = 'Start with the 12 questions';
         document.querySelectorAll('[data-insight]').forEach(node => { node.textContent = 'Take the check-in to explore how your own routines connect to this environment.'; });
         return;
     }
-    const score = answerNames.reduce((sum, key) => sum + answers[key], 0);
-    scoreNode.textContent = score;
-    document.querySelector('#score-band').textContent = score <= 9 ? 'Lighter ripple' : score <= 19 ? 'Growing ripple' : 'Wider ripple';
-    document.querySelector('#result-summary').textContent = 'From the way you travel to the things you use, your routines connect to these landscapes. Follow your story from the sky to the ocean floor.';
-    showInsights(fallbackInsights(answers));
+    scoreNode.textContent = answerNames.length;
+    document.querySelector('.score-out-of').textContent = 'answers considered';
+    document.querySelector('#score-band').textContent = 'Your check-in';
+    document.querySelector('#result-summary').textContent = 'Follow how all twelve of your choices connect through the atmosphere, ocean, and seafloor.';
     const fingerprint = JSON.stringify(answerNames.map(key => answers[key]));
     try {
         const cached = JSON.parse(localStorage.getItem('ecosphere-insights'));
@@ -67,7 +63,7 @@ async function personalize() {
     const timeout = setTimeout(() => controller.abort(), 30000);
     try {
         if (location.protocol === 'file:') throw new Error('Server required');
-        const response = await fetch('/api/insights', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({answers}), signal: controller.signal });
+        const response = await fetch('/api/insights', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({answers}), signal: controller.signal});
         if (!response.ok) throw new Error('Insights unavailable');
         const data = await response.json();
         if (!validInsights(data.insights)) throw new Error('Invalid response');
@@ -75,7 +71,7 @@ async function personalize() {
         status.textContent = 'Your personal connections · generated with Gemini';
         try { localStorage.setItem('ecosphere-insights', JSON.stringify({fingerprint, insights: data.insights})); } catch { /* Display still works without cache. */ }
     } catch {
-        status.textContent = 'Showing notes based on your answers. AI explanations are unavailable right now.';
+        status.textContent = 'AI explanations are unavailable right now. Please try again when the connection is restored.';
     } finally { clearTimeout(timeout); }
 }
 personalize();
@@ -91,15 +87,12 @@ if ('IntersectionObserver' in window) {
     }, {rootMargin: '-15% 0px -45% 0px'});
     document.querySelectorAll('.layer-section').forEach(section => observer.observe(section));
 }
-
-// Start on press so the ripple responds immediately, including before navigation.
 function navigateAfterRipple(url) {
     const delay = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 180;
     window.setTimeout(() => window.location.assign(url), delay);
 }
 function createButtonRipple(button, event) {
-    if (button.matches(':disabled, [aria-disabled="true"]') ||
-        window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (button.matches(':disabled, [aria-disabled="true"]') || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const bounds = button.getBoundingClientRect();
     const keyboard = event.type === 'click' && event.detail === 0;
     const x = keyboard ? bounds.width / 2 : event.clientX - bounds.left;
@@ -123,10 +116,7 @@ document.addEventListener('click', event => {
     const button = event.target.closest('button, .button');
     if (!button) return;
     if (event.detail === 0) createButtonRipple(button, event);
-    // Preserve modified clicks, downloads, and links opening in another tab.
-    if (button.matches('a[href]') && !event.defaultPrevented && event.button === 0 &&
-        !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey &&
-        !button.hasAttribute('download') && (!button.target || button.target === '_self')) {
+    if (button.matches('a[href]') && !event.defaultPrevented && event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey && !button.hasAttribute('download') && (!button.target || button.target === '_self')) {
         event.preventDefault();
         navigateAfterRipple(button.href);
     }

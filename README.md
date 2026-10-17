@@ -1,29 +1,21 @@
 # Ecosphere
 
-A ten-question reflection followed by an illustrated descent from the upper atmosphere to the seafloor. Each layer includes a personal, one- or two-sentence explanation based on the selected choices.
+A twelve-question reflection followed by an illustrated descent from the upper atmosphere to the seafloor. Gemini creates one or two sentences at each of the six layers using the complete set of selected answers.
 
 ## Run locally
 
-Requires Python 3.9 or later; no packages or build step needed.
-
-Set `GEMINI_API_KEY` in your terminal environment, then run:
+Requires Python 3.9 or later; no packages or build step needed. Set `GEMINI_API_KEY` in your terminal environment, then run:
 
 ```sh
-python3 server.py
+python server.py
 ```
 
-On Windows, `py server.py` also works. Open http://localhost:8000. The key is read only by the server and is never sent to browser code. Optionally set `GEMINI_MODEL` (default: `gemini-2.5-flash`) to an available model in your Google account, and `PORT` (default: 8000).
+Open http://localhost:8000. Optionally set `GEMINI_MODEL` (default: `gemini-2.5-flash`) and `PORT` (default: `8000`). The API key stays on the server and is not sent to browser code. Do not commit API keys to the project.
 
-Without a key, the site still runs with answer-specific local explanations. Opening the HTML directly also works with local explanations; Gemini requires the Python server rather than Live Server. Successful Gemini results are cached in this browser for the current answers. Submitting the questionnaire again clears the cache.
+Opening the HTML directly does not provide Gemini explanations; run the local server instead. Generated insights are cached in the browser for the submitted answers. Submitting the questionnaire again clears that cache.
 
-The proxy uses Google's [structured output API](https://ai.google.dev/gemini-api/docs/generate-content/structured-output) and validates all answers and returned explanations. Selected answer labels are sent to Google Gemini; no name or email is collected. The local server binds to loopback and is intended for development, not public hosting.
+The server sends the selected answer labels to Google Gemini and validates the returned six-layer JSON. No name or email is collected. The server binds to loopback and is intended for local development.
 
-## Scoring and artwork
+## Artwork
 
-The 0–30 score is a reflection tool, not a scientific footprint measurement. The explanations describe qualitative connections, not calculated personal emissions. Original SVG scenery in `assets/` takes inspiration from the supplied ocean illustration's colors and nature motifs, without using the image as a wallpaper.
-
-## Checks
-
-```sh
-python3 -m unittest discover -s tests
-```
+Original SVG scenery in `assets/` illustrates the atmospheric and ocean layers. The score display counts the answers considered; it is not a scientific footprint measurement. Explanations describe qualitative connections, not calculated personal emissions.

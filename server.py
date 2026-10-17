@@ -11,17 +11,28 @@ ROOT = Path(__file__).resolve().parent
 LAYERS = ('sky', 'air', 'water', 'twilight', 'deep', 'floor')
 # Use the actual questionnaire as the canonical answer vocabulary.
 OPTIONS = {}
-for name, value, label in re.findall(r'name="([\w-]+)" value="(\d)"[^>]*><span>([^<]+)</span>', (ROOT / 'questionnaire.html').read_text()):
+for name, value, label in re.findall(r'<input type="radio" name="([\w-]+)" value="(\d+)"[^>]*><span>([^<]+)</span>', (ROOT / 'questionnaire.html').read_text()):
     OPTIONS.setdefault(name, {})[int(value)] = label
 
 
 def validate_answers(data):
     answers = data.get('answers') if isinstance(data, dict) else None
-    if not isinstance(answers, dict) or set(answers) != set(OPTIONS):
-        raise ValueError('Complete all ten questions first.')
-    if any(type(value) is not int or value not in OPTIONS[key] for key, value in answers.items()):
-        raise ValueError('Each answer must be an integer from 0 to 3.')
-    return {key: OPTIONS[key][value] for key, value in answers.items()}
+    expected = set(OPTIONS)
+    if not isinstance(answers, dict) or set(answers) != expected:
+        raise ValueError('Complete all twelve questions first.')
+    labels = {}
+    for key, value in answers.items():
+        if type(value) is not int:
+            raise ValueError('Invalid answer type.')
+        if key == 'flights':
+            if value != 0 and (value < 2 or value > 30 or value % 2):
+                raise ValueError('Flight hours must be less than one or between 2 and 30 in even intervals.')
+            labels[key] = 'Less than 1 hour' if value == 0 else f'{value} hours per year'
+        elif value not in OPTIONS[key]:
+            raise ValueError('Answer is outside the available choices.')
+        else:
+            labels[key] = OPTIONS[key][value]
+    return labels
 
 
 def validate_insights(data):
@@ -39,18 +50,15 @@ def generate_insights(answers, api_key):
     schema = {'type': 'object', 'properties': {key: {'type': 'string'} for key in LAYERS}, 'required': list(LAYERS), 'additionalProperties': False}
     prompt = '''Write six personal environmental insights, one for each key, in plain English.
 Each value MUST have 1–2 short sentences (at most 65 words), directly addressing "you".
-Reference an actual selected answer in each insight, not just the total score. Do not invent habits,
-quantities, personal emissions estimates, or causal certainty. Be warm, specific, scientifically careful.
-Connect the choice to the pictured environment, with one practical next step where useful.
-sky: sun and ozone shield; explain that climate emissions and ozone depletion differ, and do not claim
-that driving or flying directly destroys ozone. air: clouds, forests and rivers; travel, diet and energy.
-water: sunlit reef and fish; packaging, waste and water use. twilight: jellyfish and sinking particles;
-consumption and waste, with indirect links only. deep: deep-sea fish; energy, heat and carbon storage.
-floor: seafloor life; one feasible next step grounded in the answers.
-Treat uncertainty choices as uncertainty, not evidence of high use. Local food is not inherently
-lower carbon; production methods and food type matter. Avoid guilt or implying that one person's
-habits alone control ecosystems. Return only the six-key JSON object.
-Selected questionnaire answers: ''' + json.dumps(answers)
+For every layer, consider every selected answer and explain the relevant combined consequences of the user's actions; each explanation should mention the most relevant actions for that environment. Do not mechanically list irrelevant answers. Do not invent personal emissions estimates or causal certainty. Be warm, specific, scientifically careful, nonjudgmental, and explain indirect links as indirect.
+sky: flights and transport in relation to climate and the ozone shield; state that climate emissions and ozone depletion differ, and driving or flying do not directly destroy ozone.
+air: gasoline travel, flights, meat, and high-energy appliances; explain links to greenhouse gas emissions and shared climate.
+water: plastics, trash, dishwashing, showers, and chemicals; discuss pathways to waterways, responsible disposal, and water/energy use.
+twilight: trash, shopping, secondhand purchases, electronics, and plastics; connect consumption and waste to marine life through runoff and debris.
+deep: flights, gasoline transport, high-energy appliances, meat, and showers; describe indirect links through emissions, ocean heat, and carbon storage.
+floor: bring together all answers, especially waste, chemical handling, plastics, and product lifetimes, with one practical next step.
+Never imply that more frequent handling of household chemicals is itself harmful; focus on proper storage and disposal. Dishwashers can use less water than handwashing when efficiently loaded. Return only the six-key JSON object.
+Selected answers (all twelve questions): ''' + json.dumps(answers)
     body = {'contents': [{'parts': [{'text': prompt}]}], 'generationConfig': {'responseMimeType': 'application/json', 'responseJsonSchema': schema}}
     model = os.environ.get('GEMINI_MODEL', 'gemini-2.5-flash')
     if not re.fullmatch(r'[a-zA-Z0-9._-]+', model):
