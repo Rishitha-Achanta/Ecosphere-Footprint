@@ -1,6 +1,7 @@
 import json
 import threading
 import unittest
+from unittest.mock import patch
 from urllib.request import Request, urlopen
 
 import server
@@ -35,8 +36,9 @@ class GameRouteTests(unittest.TestCase):
             headers={'Content-Type': 'application/json'},
             method='POST',
         )
-        with urlopen(request) as response:
-            started = json.loads(response.read())
+        with patch.dict(server.os.environ, {'GEMINI_API_KEY': ''}):
+            with urlopen(request) as response:
+                started = json.loads(response.read())
 
         game_id = started['game_id']
         self.addCleanup(self.remove_game, game_id)
@@ -59,6 +61,21 @@ class GameRouteTests(unittest.TestCase):
             self.assertEqual(game['total'], 3)
         self.assertTrue(game['complete'])
         self.assertEqual(len(game['actions']), 3)
+
+    def test_player_can_start_stories_of_one_through_four_days(self):
+        with patch.dict(server.os.environ, {'GEMINI_API_KEY': ''}):
+            for days in range(1, 5):
+                request = Request(
+                    f'{self.base_url}/api/game/start',
+                    data=json.dumps({'use_defaults': True, 'days': days}).encode(),
+                    headers={'Content-Type': 'application/json'},
+                    method='POST',
+                )
+                with urlopen(request) as response:
+                    started = json.loads(response.read())
+                self.addCleanup(self.remove_game, started['game_id'])
+                self.assertEqual(started['game']['days'], days)
+                self.assertEqual(started['game']['total'], days * server.DECISIONS_PER_DAY)
 
     @staticmethod
     def remove_game(game_id):

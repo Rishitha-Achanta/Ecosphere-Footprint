@@ -235,6 +235,7 @@ h1{
 .slider-control input[type="range"]:active { cursor: grabbing; }
 .slider-output { display: block; margin-top: 10px; color: #123b64; font-size: 17px; font-weight: 700; text-align: center; }
 .quiz-step-controls .button:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+.questionnaire-page .question-number { color: #174f86; }
 
 .result-intro { display: flex; width: min(1060px, 88vw); min-height: 350px; align-items: center; justify-content: space-between; gap: 40px; margin: 0 auto; padding: 55px 0 45px; }
 .result-intro > div:first-child { max-width: 630px; }
@@ -860,6 +861,8 @@ button > .button-ripple, .button > .button-ripple {
 .life-progress { display: flex; align-items: center; gap: 14px; margin: 19px 3px 20px; color: #c5dae3; font-size: 12px; }
 .life-progress-track { height: 9px; flex: 1; overflow: hidden; border: 1px solid rgba(238, 250, 255, .24); border-radius: 999px; background: rgba(3, 22, 38, .62); }
 .life-progress-track span { display: block; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #53baa9, #a2ebd9); transition: width .25s ease; }
+.life-scenario-status { min-height: 1.5em; margin: -8px 3px 14px; color: #c5dae3; font-size: 12px; text-align: center; }
+.life-scenario-status[data-source="fallback"] { color: #ffe2a8; }
 .life-event, .life-empty, .life-complete {
     padding: clamp(23px, 4vw, 38px);
     border: 1px solid rgba(195, 225, 240, .6);
@@ -899,6 +902,27 @@ button > .button-ripple, .button > .button-ripple {
 .life-choice:focus-visible { outline: 3px solid rgba(35, 131, 142, .35); outline-offset: 2px; }
 .choice-letter { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 50%; background: #e5f1f6; color: #315875; font-size: 12px; font-weight: 800; }
 .choice-text { font-size: 14px; font-weight: 600; line-height: 1.5; }
+.life-scene-animation { position: relative; display: grid; width: 74px; height: 74px; place-items: center; margin: 24px auto 0; overflow: hidden; border: 1px solid rgba(50, 139, 142, .18); border-radius: 50%; background: radial-gradient(circle, #fff 15%, #e6f2f7 100%); }
+.life-scene-icon { position: relative; z-index: 1; display: block; font-size: 35px; line-height: 1; animation: life-scene-bob 2.3s ease-in-out infinite; }
+.life-scene-particle { position: absolute; top: 14px; left: 13px; width: 7px; height: 7px; border-radius: 50%; background: #72cbb7; animation: life-scene-orbit 2.8s linear infinite; }
+.life-scene-particle + .life-scene-particle { top: auto; right: 13px; bottom: 14px; left: auto; width: 5px; height: 5px; background: #f2bb61; animation-direction: reverse; }
+.life-scene-animation[data-theme="transport"] .life-scene-icon { animation-name: life-scene-travel; }
+.life-scene-animation[data-theme="flights"] .life-scene-icon { animation-name: life-scene-flight; }
+.life-scene-animation[data-theme="appliances"] .life-scene-icon,
+.life-scene-animation[data-theme="electronics"] .life-scene-icon { animation-name: life-scene-pulse; }
+.life-scene-animation[data-theme="trash"] .life-scene-icon,
+.life-scene-animation[data-theme="secondhand"] .life-scene-icon,
+.life-scene-animation[data-theme="plastics"] .life-scene-icon { animation-name: life-scene-turn; }
+.life-scene-animation[data-theme="dishes"] .life-scene-icon,
+.life-scene-animation[data-theme="showers"] .life-scene-icon,
+.life-scene-animation[data-theme="chemicals"] .life-scene-icon { animation-name: life-scene-drop; }
+@keyframes life-scene-bob { 50% { transform: translateY(-5px); } }
+@keyframes life-scene-travel { 50% { transform: translateX(7px); } }
+@keyframes life-scene-flight { 50% { transform: translate(6px, -5px) rotate(-8deg); } }
+@keyframes life-scene-pulse { to { transform: scale(1.12); } }
+@keyframes life-scene-turn { to { transform: rotate(14deg); } }
+@keyframes life-scene-drop { 50% { transform: translateY(5px); } }
+@keyframes life-scene-orbit { to { transform: translate(38px, 34px); opacity: .2; } }
 #insight-retry[hidden], #gemini-key-help[hidden] { display: none; }
 .insight-recovery { display: grid; justify-items: start; gap: 9px; margin: 10px 0 16px; }
 #insight-retry { min-height: 40px; padding: 9px 14px; border-color: rgba(196, 235, 231, .4); background: rgba(7, 39, 56, .68); color: #e2f3f2; font-size: 12px; }
@@ -945,4 +969,5 @@ button > .button-ripple, .button > .button-ripple {
 }
 @media (prefers-reduced-motion: reduce) {
     .life-progress-track span, .life-choice { transition: none; }
+    .life-scene-icon, .life-scene-particle { animation: none; }
 }

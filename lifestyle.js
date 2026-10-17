@@ -7,6 +7,7 @@ const gameIdKey = 'ecosphere-life-game-id';
 const gamePanel = document.querySelector('#game-panel');
 const gameSetup = document.querySelector('#game-setup');
 const gameDefaultNote = document.querySelector('#game-default-note');
+const gameScenarioStatus = document.querySelector('#game-scenario-status');
 const gameLoading = document.querySelector('#game-loading');
 const gameError = document.querySelector('#game-error');
 const gameErrorText = document.querySelector('#game-error-text');
@@ -16,6 +17,20 @@ const gameDays = document.querySelector('#game-days');
 let activeGameId = '';
 let gameRequestBusy = false;
 let selectedDays = Number(gameDays?.value || 4);
+const gameSceneIcons = {
+    transport: '🚲',
+    appliances: '⚡',
+    flights: '✈️',
+    diet: '🥬',
+    trash: '♻️',
+    shopping: '🛍️',
+    secondhand: '🔁',
+    electronics: '🔌',
+    dishes: '🍽️',
+    showers: '💧',
+    plastics: '🧴',
+    chemicals: '🧪'
+};
 
 function sessionValue(key) {
     try { return sessionStorage.getItem(key) || ''; } catch { return ''; }
@@ -90,12 +105,18 @@ function renderGame(game, announceChange = false, moveFocus = false) {
     progressTrack.setAttribute('aria-valuenow', game.completed);
     progressFill.style.width = `${game.completed / game.total * 100}%`;
     progressLabel.textContent = `${game.completed} of ${game.total} decisions`;
+    const scenarioSource = game.scenario_source === 'gemini' ? 'gemini' : 'fallback';
+    gameScenarioStatus.dataset.source = scenarioSource;
+    gameScenarioStatus.textContent = scenarioSource === 'gemini'
+        ? 'Fresh game scenarios generated with Gemini.'
+        : game.scenario_note || 'Using the built-in game scenarios because Gemini is unavailable.';
 
     if (game.complete) {
         document.querySelector('#life-event').hidden = true;
         document.querySelector('#game-complete').hidden = false;
         document.querySelector('#game-day').textContent = 'Your story is complete';
         document.querySelector('#game-decision').textContent = `${game.total} decisions made`;
+        document.querySelector('#complete-kicker').textContent = `${game.days} ${game.days === 1 ? 'DAY' : 'DAYS'}, ${game.total} DECISIONS`;
         document.querySelector('#final-score').textContent = game.score;
         document.querySelector('#starting-score').textContent = game.starting_score;
         const recap = document.querySelector('#game-recap');
@@ -122,6 +143,9 @@ function renderGame(game, announceChange = false, moveFocus = false) {
     document.querySelector('#event-question').textContent = scene.question;
     const choices = document.querySelector('#life-choices');
     choices.replaceChildren(...scene.choices.map(choiceButton));
+    const sceneAnimation = document.querySelector('#life-scene-animation');
+    sceneAnimation.dataset.theme = scene.answer_key;
+    sceneAnimation.querySelector('.life-scene-icon').textContent = gameSceneIcons[scene.answer_key] || '🌱';
     gameActionStatus.textContent = announceChange ? 'Your impact score has been updated.' : '';
     if (moveFocus) document.querySelector('#event-title').focus({preventScroll: true});
 }

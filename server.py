@@ -1,4 +1,5 @@
 """Local Ecosphere server: static assets and a server-side Gemini proxy."""
+import errno
 import json
 import os
 from pathlib import Path
@@ -70,6 +71,34 @@ LIFE_SCENES = (
     {'answer_key': 'plastics', 'title': 'Packing snacks for tomorrow', 'context': 'The selected response indicates single-use plastic use is {answer}. A drink and snacks are being packed for the day.', 'question': 'What do you bring along?', 'choices': (('Single-use bottles, bags, cups, and wrapped snacks', 8), ('A mix of disposable packaging and reusable items', 3), ('A reusable bottle and food container', -3), ('Reusable containers and unpackaged snacks', -5))},
     {'answer_key': 'chemicals', 'title': 'A battery and leftover paint', 'context': 'The selected response says household or garden products are handled {answer}. A remote needs a new battery, and old paint and cleaner are in storage.', 'question': 'How do you store or dispose of them?', 'choices': (('Put batteries and leftover products in regular trash', 8), ('Store everything without checking the labels', 3), ('Follow product labels and local disposal guidance', -4), ('Store items safely and take hazardous waste to a collection site', -5))},
 )
+GAME_TOPICS = {
+    'transport': 'everyday gasoline-vehicle travel',
+    'appliances': 'high-energy appliance use at home',
+    'flights': 'yearly air travel',
+    'diet': 'meals containing beef or lamb',
+    'trash': 'weekly household trash',
+    'shopping': 'buying new clothes or consumer products',
+    'secondhand': 'buying second-hand products',
+    'electronics': 'electronics replacement intervals',
+    'dishes': 'handwashing versus dishwasher use',
+    'showers': 'shower duration',
+    'plastics': 'single-use plastic use',
+    'chemicals': 'handling household and garden products',
+}
+GAME_ANSWER_CONTEXTS = {
+    'transport': 'Your gasoline-vehicle travel frequency is {answer}.',
+    'appliances': 'You report using high-energy appliances {answer}.',
+    'flights': 'Your selected yearly air-travel estimate is {answer}.',
+    'diet': 'Your selected frequency for beef or lamb meals is {answer}.',
+    'trash': 'Your weekly household trash is {answer}.',
+    'shopping': 'You report buying new clothes or products {answer}.',
+    'secondhand': 'You report buying second-hand products {answer}.',
+    'electronics': 'Your selected electronics replacement interval is {answer}.',
+    'dishes': 'Your selected dishwashing method is {answer}.',
+    'showers': 'Your usual shower duration is {answer}.',
+    'plastics': 'You report using single-use plastics {answer}.',
+    'chemicals': 'You report handling household or garden products {answer}.',
+}
 
 
 def validate_answers(data):
@@ -123,9 +152,18 @@ def validate_game_days(days):
     return days
 
 
-def new_game(answers, labels, days):
+def new_game(answers, labels, days, generated_scenes=None, scenario_source='built-in', scenario_note=''):
     clean_expired_game_sessions()
-    scenes = list(LIFE_SCENES)
+    scenes = [dict(scene) for scene in LIFE_SCENES]
+    for scene in scenes:
+        scene['context'] = scene['context'].format(answer=labels[scene['answer_key']])
+    if generated_scenes:
+        for scene in scenes:
+            generated = generated_scenes[scene['answer_key']]
+            key = scene['answer_key']
+            scene['title'] = generated['title']
+            scene['context'] = f"{GAME_ANSWER_CONTEXTS[key].format(answer=labels[key])} {generated['scenario']}"
+            scene['question'] = generated['question']
     # Break ties differently each game while retaining the strongest reported
     # lifestyle themes at the beginning of the story.
     random.SystemRandom().shuffle(scenes)
@@ -142,6 +180,8 @@ def new_game(answers, labels, days):
         'score': starting_score,
         'starting_score': starting_score,
         'actions': [],
+        'scenario_source': scenario_source,
+        'scenario_note': scenario_note,
         'touched_at': time.time(),
     }
     with GAME_SESSIONS_LOCK:
@@ -175,6 +215,8 @@ def game_view(state):
         'completed': state['round'],
         'total': total,
         'days': state['days'],
+        'scenario_source': state.get('scenario_source', 'built-in'),
+        'scenario_note': state.get('scenario_note', ''),
         'actions': [{'title': action['title'], 'choice': action['choice']} for action in state['actions']] if completed else [],
     }
     if completed:
@@ -183,8 +225,9 @@ def game_view(state):
     view['day'] = state['round'] // DECISIONS_PER_DAY + 1
     view['decision'] = state['round'] % DECISIONS_PER_DAY + 1
     view['scene'] = {
+        'answer_key': scene['answer_key'],
         'title': scene['title'],
-        'context': scene['context'].format(answer=state['labels'][scene['answer_key']]),
+        'context': scene['context'],
         'question': scene['question'],
         'choices': [{'text': text} for text, _ in scene['choices']],
     }
@@ -227,6 +270,21 @@ def validate_insights(data):
             raise ValueError('Each insight must contain 50 to 120 words.')
         if not 1 <= len(re.findall(r'[^.!?]+[.!?](?:\s|$)', value.strip())) <= 3:
             raise ValueError('Expected one to three sentences.')
+    return data
+
+
+def validate_game_scenarios(data):
+    if not isinstance(data, dict) or set(data) != set(GAME_TOPICS):
+        raise ValueError('Gemini did not return all twelve game scenarios.')
+    for key, scenario in data.items():
+        if not isinstance(scenario, dict) or set(scenario) != {'title', 'scenario', 'question'}:
+            raise ValueError(f'Gemini returned an invalid scenario for {key}.')
+        for field, minimum, maximum in (('title', 2, 9), ('scenario', 8, 36), ('question', 5, 24)):
+            value = scenario[field]
+            if not isinstance(value, str) or not minimum <= len(value.split()) <= maximum or len(value) > 260:
+                raise ValueError(f'Gemini returned an invalid {field} for {key}.')
+            if any(ord(character) < 32 and character not in '\t\n\r' for character in value):
+                raise ValueError(f'Gemini returned invalid text for {key}.')
     return data
 
 
@@ -364,6 +422,53 @@ Selected answers (all twelve questions): ''' + json.dumps(answers)
                 raise GeminiServiceError('Gemini did not return six explanations in the required format after a retry.', 'retry', retryable=True) from error
 
 
+def generate_game_scenarios(api_key, labels):
+    schema = {
+        'type': 'object',
+        'properties': {
+            key: {
+                'type': 'object',
+                'properties': {'title': {'type': 'string'}, 'scenario': {'type': 'string'}, 'question': {'type': 'string'}},
+                'required': ['title', 'scenario', 'question'],
+                'additionalProperties': False,
+            }
+            for key in GAME_TOPICS
+        },
+        'required': list(GAME_TOPICS),
+        'additionalProperties': False,
+    }
+    settings = (
+        'a rainy weekday',
+        'a weekend neighborhood event',
+        'an evening at home',
+        'a busy day of errands',
+        'a visit with friends',
+        'a seasonal change in the weather',
+    )
+    setting = random.SystemRandom().choice(settings)
+    topic_list = '\n'.join(
+        f'- {key}: {topic}; selected questionnaire response: "{labels[key]}". Existing game choices: '
+        + '; '.join(choice for choice, _ in scene['choices']) + '.'
+        for scene in LIFE_SCENES
+        for key, topic in [(scene['answer_key'], GAME_TOPICS[scene['answer_key']])]
+    )
+    prompt = f'''Create a fresh, playable everyday-life scene for each fixed game topic below.
+Use this overall setting as a creative starting point: {setting}. Each scene must contain a short title, a concrete 8–36 word situation, and a 5–24 word question that naturally introduces the choices listed for that scene.
+The selected questionnaire response is context only. Keep every scene respectful, realistic, safe, and understandable without extra knowledge. Do not alter or repeat the listed choices, change the topic, invent personal facts, make the selected response sound like a different one, or include advice. Keep all twelve scenes distinct and do not include markdown or extra keys.
+Topics, responses, and fixed choices:
+{topic_list}'''
+    response_format = {'type': 'text', 'mime_type': 'application/json', 'schema': schema}
+    try:
+        response_text = gemini_interaction(prompt, api_key, max_output_tokens=3200, response_format=response_format)
+        return validate_game_scenarios(json.loads(response_text))
+    except (ValueError, TypeError, json.JSONDecodeError) as error:
+        raise GeminiServiceError('Gemini did not return twelve valid game scenarios. Built-in game scenarios will be used instead.', 'retry', retryable=True) from error
+
+
+class LocalHTTPServer(ThreadingHTTPServer):
+    allow_reuse_address = False
+
+
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(ROOT), **kwargs)
@@ -439,7 +544,19 @@ class Handler(SimpleHTTPRequestHandler):
                     labels = validate_answers(payload)
                     answers = payload['answers']
                 days = validate_game_days(payload.get('days'))
-                game_id, state = new_game(answers, labels, days)
+                generated_scenes = None
+                scenario_source = 'built-in'
+                key = os.environ.get('GEMINI_API_KEY', '').strip()
+                if key:
+                    try:
+                        generated_scenes = generate_game_scenarios(key, labels)
+                        scenario_source = 'gemini'
+                        scenario_note = ''
+                    except GeminiServiceError:
+                        scenario_note = 'Gemini could not create fresh scenes, so this game is using its built-in scenarios.'
+                else:
+                    scenario_note = 'Gemini is not configured, so this game is using its built-in scenarios.'
+                game_id, state = new_game(answers, labels, days, generated_scenes, scenario_source, scenario_note)
                 self.send_json(200, {'game_id': game_id, 'game': game_view(state)})
                 return
             if path == '/api/game/state':
@@ -479,7 +596,25 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_json(200, result)
 
 
+def create_http_server(port, allow_fallback=True):
+    try:
+        return LocalHTTPServer(('127.0.0.1', port), Handler)
+    except OSError as error:
+        if not allow_fallback or error.errno != errno.EADDRINUSE:
+            raise
+    for fallback_port in range(port + 1, port + 11):
+        try:
+            httpd = LocalHTTPServer(('127.0.0.1', fallback_port), Handler)
+            print(f'Port {port} is already in use; using {fallback_port} instead.', flush=True)
+            return httpd
+        except OSError as error:
+            if error.errno != errno.EADDRINUSE:
+                raise
+    raise OSError(f'Ports {port}–{port + 10} are already in use. Stop an existing server or set PORT to a free port.')
+
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', '8000'))
-    print(f'Ecosphere: http://localhost:{port}', flush=True)
-    ThreadingHTTPServer(('127.0.0.1', port), Handler).serve_forever()
+    httpd = create_http_server(port, allow_fallback='PORT' not in os.environ)
+    print(f'Ecosphere: http://127.0.0.1:{httpd.server_port}', flush=True)
+    httpd.serve_forever()

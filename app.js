@@ -11,6 +11,11 @@ if (form) {
     const questionGrid = form.querySelector('.question-grid');
     const submitPanel = form.querySelector('.quiz-submit');
     let activeQuestion = 0;
+    for (let index = cards.length - 1; index > 0; index--) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [cards[index], cards[swapIndex]] = [cards[swapIndex], cards[index]];
+    }
+    questionGrid.append(...cards);
     cards.forEach((card, index) => { card.tabIndex = -1; card.hidden = index !== 0; });
     cards.forEach(card => card.querySelectorAll('input[type="range"]').forEach(slider => {
         const labels = slider.dataset.labels.split('|');
@@ -69,7 +74,13 @@ if (form) {
             return;
         }
         nextButton.hidden = false;
-        cards.forEach((card, index) => { card.hidden = index !== activeQuestion; });
+        cards.forEach((card, index) => {
+            card.hidden = index !== activeQuestion;
+            if (index === activeQuestion) {
+                card.querySelector('[data-question-number]').textContent = String(index + 1).padStart(2, '0');
+            }
+        });
+        backButton.disabled = activeQuestion === 0;
         backButton.disabled = activeQuestion === 0;
         nextButton.disabled = !activeCardAnswered();
         nextButton.innerHTML = activeQuestion === cards.length - 1 ? 'Finish check-in <span aria-hidden="true">→</span>' : 'Continue <span aria-hidden="true">→</span>';
@@ -111,6 +122,7 @@ if (form) {
     renderQuestion();
     form.addEventListener('submit', (event) => {
         event.preventDefault();
+        if (activeQuestion < cards.length) return;
         if (!form.reportValidity()) return;
         const submitted = new FormData(form);
         const answers = Object.fromEntries(answerNames.map(key => [key, Number(submitted.get(key))]));
