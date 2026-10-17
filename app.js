@@ -118,7 +118,6 @@ if (form) {
             localStorage.setItem('ecosphere-answers', JSON.stringify(answers));
             localStorage.removeItem('ecosphere-insights');
             try {
-                sessionStorage.removeItem('ecosphere-life-unlocked');
                 sessionStorage.removeItem('ecosphere-life-game-id');
             } catch { /* Session storage is optional. */ }
             navigateAfterRipple('cascade.html');
@@ -127,9 +126,6 @@ if (form) {
         }
     });
 }
-document.querySelector('#play-life-game')?.addEventListener('click', () => {
-    try { sessionStorage.setItem('ecosphere-life-unlocked', 'cascade-bottom'); } catch { /* The game page will explain the route if storage is disabled. */ }
-});
 function validAnswers(answers) {
     const maxima = {transport: 4, appliances: 4, flights: 16, diet: 4, trash: 5, shopping: 4, secondhand: 4, electronics: 4, dishes: 1, showers: 4, plastics: 4, chemicals: 4};
     return answers && Object.keys(answers).length === answerNames.length && answerNames.every(key => Number.isInteger(answers[key]) && answers[key] >= 0 && answers[key] <= maxima[key]);

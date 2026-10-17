@@ -20,7 +20,7 @@
             <p class="eyebrow"><span class="eyebrow-line"></span> LITTLE PLANET LIFE</p>
             <img class="life-rocket-art" src="assets/Screenshot_2026-10-17_162826-removebg-preview.png" alt="" width="150" height="150" aria-hidden="true">
             <h1>Your everyday life, <span>one choice at a time.</span></h1>
-            <p>Your starting impact score comes from the resource-use part of your questionnaire, and all 12 answers shape the everyday scenes. Higher scores represent more environmental pressure.</p>
+            <p>Your check-in personalizes the scenes and starting score. Skip it and the game uses the questionnaire's sample responses instead. Higher scores represent more environmental pressure.</p>
             <p class="life-disclaimer">Scores are illustrative, not a scientific footprint measurement.</p>
         </section>
 
@@ -33,7 +33,8 @@
         <section class="life-empty life-setup" id="game-setup" hidden>
             <p class="life-card-kicker">SET YOUR TIMELINE</p>
             <h2>How many days would you like to play?</h2>
-            <p>Each day brings three personalized everyday decisions, based on your questionnaire.</p>
+            <p>Each day brings three everyday decisions. Your check-in personalizes them, or sample responses let you start right away.</p>
+            <p class="life-disclaimer" id="game-default-note" hidden>No check-in was found, so this game will use the sample responses shown in the questionnaire.</p>
             <label class="day-picker" for="game-days">
                 <span>Days in your story</span>
                 <select id="game-days" name="game-days">
@@ -44,20 +45,6 @@
                 </select>
             </label>
             <button class="button button-primary" id="start-game" type="button">Begin your story <span aria-hidden="true">→</span></button>
-        </section>
-
-        <section class="life-empty" id="game-gate" hidden>
-            <p class="life-card-kicker">THE JOURNEY CONTINUES BELOW</p>
-            <h2>Reach the end of your cascade to begin</h2>
-            <p>Little Planet Life opens from the final ocean layer, after your answers have shaped your cascade.</p>
-            <a class="button button-primary" href="cascade.html#ocean-floor">Go to the cascade's final layer <span aria-hidden="true">→</span></a>
-        </section>
-
-        <section class="life-empty" id="game-empty" hidden>
-            <p class="life-card-kicker">YOUR STORY STARTS WITH A CHECK-IN</p>
-            <h2>Answer the 12 questions first</h2>
-            <p>The game uses your answers to personalize its everyday scenes; resource-use answers also set your starting impact score.</p>
-            <a class="button button-primary" href="questionnaire.html">Go to questionnaire <span aria-hidden="true">→</span></a>
         </section>
 
         <section class="life-empty life-loading" id="game-loading" hidden aria-live="polite">
@@ -83,7 +70,7 @@
                 <div class="life-score-card" aria-live="polite">
                     <span class="life-card-kicker">IMPACT SCORE</span>
                     <strong id="game-score">0</strong>
-                    <span>Starting score comes from your check-in</span>
+                    <span>Illustrative score from the selected responses</span>
                 </div>
             </div>
 

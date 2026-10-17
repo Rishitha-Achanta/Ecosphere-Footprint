@@ -4,11 +4,9 @@
  */
 const gameAnswerKeys = ['transport', 'appliances', 'flights', 'diet', 'trash', 'shopping', 'secondhand', 'electronics', 'dishes', 'showers', 'plastics', 'chemicals'];
 const gameIdKey = 'ecosphere-life-game-id';
-const gameEntryKey = 'ecosphere-life-unlocked';
 const gamePanel = document.querySelector('#game-panel');
-const gameGate = document.querySelector('#game-gate');
-const gameEmpty = document.querySelector('#game-empty');
 const gameSetup = document.querySelector('#game-setup');
+const gameDefaultNote = document.querySelector('#game-default-note');
 const gameLoading = document.querySelector('#game-loading');
 const gameError = document.querySelector('#game-error');
 const gameErrorText = document.querySelector('#game-error-text');
@@ -129,23 +127,15 @@ function renderGame(game, announceChange = false, moveFocus = false) {
 }
 
 function showGameSetup() {
-    if (!getQuestionnaireAnswers()) {
-        setVisible(gameEmpty, true);
-        return;
-    }
     setVisible(gamePanel, false);
     setVisible(gameError, false);
     setVisible(gameLoading, false);
+    setVisible(gameDefaultNote, !getQuestionnaireAnswers());
     setVisible(gameSetup, true);
 }
 
 async function openGame(days = selectedDays) {
     const answers = getQuestionnaireAnswers();
-    if (!answers) {
-        setVisible(gameLoading, false);
-        setVisible(gameEmpty, true);
-        return;
-    }
     selectedDays = Number(days);
     setVisible(gameError, false);
     setVisible(gameSetup, false);
@@ -164,7 +154,10 @@ async function openGame(days = selectedDays) {
             }
         }
         if (!activeGameId) {
-            response = await postGame('/api/game/start', {entry: 'cascade-bottom', answers, days: selectedDays});
+            const payload = {days: selectedDays};
+            if (answers) payload.answers = answers;
+            else payload.use_defaults = true;
+            response = await postGame('/api/game/start', payload);
             activeGameId = response.game_id;
             setSessionValue(gameIdKey, activeGameId);
         }
@@ -220,16 +213,6 @@ async function restartGame() {
 }
 
 function beginLifestyle() {
-    const parameters = new URLSearchParams(window.location.search);
-    const arrivedFromCascade = parameters.get('from') === 'cascade';
-    if (arrivedFromCascade) {
-        setSessionValue(gameEntryKey, 'cascade-bottom');
-        window.history.replaceState({}, '', window.location.pathname);
-    }
-    if (!arrivedFromCascade && sessionValue(gameEntryKey) !== 'cascade-bottom') {
-        setVisible(gameGate, true);
-        return;
-    }
     if (sessionValue(gameIdKey)) {
         openGame();
     } else {

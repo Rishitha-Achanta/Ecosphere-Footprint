@@ -36,11 +36,15 @@ def load_local_env():
 load_local_env()
 # Use the slider labels in the questionnaire as the canonical answer vocabulary.
 OPTIONS = {}
-for name, minimum, maximum, step, labels in re.findall(r'<input type="range" name="([\w-]+)" min="(\d+)" max="(\d+)" step="(\d+)"[^>]*data-labels="([^"]+)"', (ROOT / 'questionnaire.html').read_text(encoding='utf-8')):
+DEFAULT_ANSWERS = {}
+for name, minimum, maximum, step, default, labels in re.findall(r'<input type="range" name="([\w-]+)" min="(\d+)" max="(\d+)" step="(\d+)"[^>]*?value="(\d+)"[^>]*?data-labels="([^"]+)"', (ROOT / 'questionnaire.html').read_text(encoding='utf-8')):
     choices = labels.split('|')
     if len(choices) != (int(maximum) - int(minimum)) // int(step) + 1:
         raise ValueError(f'Slider labels do not match its range: {name}')
+    if int(default) not in range(len(choices)):
+        raise ValueError(f'Slider default is outside its choices: {name}')
     OPTIONS[name] = {index: label for index, label in enumerate(choices)}
+    DEFAULT_ANSWERS[name] = int(default)
 
 
 # Little Planet Life is intentionally defined on the server.  The browser only
@@ -53,18 +57,18 @@ GAME_SESSIONS = {}
 GAME_SESSIONS_LOCK = threading.RLock()
 
 LIFE_SCENES = (
-    {'answer_key': 'transport', 'title': 'A rainy morning commute', 'context': 'Your check-in says gasoline-vehicle travel is {answer}. A friend headed the same way offers to share the trip.', 'question': 'How do you get across town today?', 'choices': (('Drive alone in a gasoline car', 8), ('Share the ride with your friend', 3), ('Take the bus or train', -3), ('Walk or bike if it is safe and practical', -5))},
-    {'answer_key': 'appliances', 'title': 'A warm afternoon at home', 'context': 'You reported running high-energy appliances {answer}. The room is getting warm while you work.', 'question': 'What is your first move to stay comfortable?', 'choices': (('Run the air conditioner with the windows open', 8), ('Cool the room with windows closed and a reasonable setting', 3), ('Use a fan and close the curtains against direct sun', -2), ('Ventilate naturally when it is cooler outside', -4))},
-    {'answer_key': 'flights', 'title': 'A weekend visit with friends', 'context': 'You estimated {answer} of air travel in a typical year. Friends invite you to a nearby gathering.', 'question': 'How do you make the trip happen?', 'choices': (('Book several flights for short visits', 9), ('Take one direct flight', 5), ('Use a train or bus if the route works', -3), ('Join remotely or plan a local get-together', -5))},
-    {'answer_key': 'diet', 'title': 'Lunch with your friends', 'context': 'Your questionnaire answer for beef and lamb meals was {answer}. The cafe has several filling options.', 'question': 'What goes on your plate today?', 'choices': (('Order the beef or lamb special', 8), ('Choose another meat option', 4), ('Try a vegetarian meal', -3), ('Choose a plant-based meal using food already available', -5))},
-    {'answer_key': 'trash', 'title': 'The kitchen bin is full', 'context': 'You said your household makes {answer} of trash each week. You notice clean containers and food scraps in the bin.', 'question': 'How do you handle the cleanup?', 'choices': (('Throw everything into the regular trash', 7), ('Recycle accepted containers', 2), ('Recycle and compost where those services exist', -3), ('Sort waste and set aside usable items to reuse', -5))},
-    {'answer_key': 'shopping', 'title': 'A tempting new jacket', 'context': 'You said you buy new clothes or other products {answer}. Your current jacket still works, but a new one catches your eye.', 'question': 'What do you do before checking out?', 'choices': (('Buy the new jacket right away', 7), ('Wait a day and decide whether you need it', 2), ('Repair or keep wearing the jacket you own', -3), ('Borrow one or look for a second-hand option', -5))},
-    {'answer_key': 'secondhand', 'title': 'Finding a bookshelf', 'context': 'Your check-in says you buy second-hand products {answer}. You need a bookshelf for your room.', 'question': 'Where do you look first?', 'choices': (('Order a brand-new bookshelf', 6), ('Check second-hand shops or local listings', -4), ('Reuse, borrow, or repair a shelf already nearby', -5))},
-    {'answer_key': 'electronics', 'title': 'A new phone is released', 'context': 'You usually replace electronics {answer}. Your current phone still works, and a newer model is advertised.', 'question': 'How do you decide what to do?', 'choices': (('Buy the new phone now', 8), ('Replace it when it no longer meets your needs', 2), ('Repair it or keep using it for longer', -5))},
-    {'answer_key': 'dishes', 'title': 'Dishes after dinner', 'context': 'You said you usually use a {answer}. Tonight there are enough dishes for a small load.', 'question': 'How do you wash them efficiently?', 'choices': (('Run the dishwasher half-full', 6), ('Wait for a full load and use an efficient cycle', -4), ('Handwash in a filled basin', -3), ('Leave the hot tap running while washing', 6))},
-    {'answer_key': 'showers', 'title': 'Winding down for the night', 'context': 'You usually take showers that last {answer}. You have had a busy day and want to relax.', 'question': 'How do you use water tonight?', 'choices': (('Take a shower longer than 15 minutes', 7), ('Take a shower of about 10 minutes', 3), ('Keep it near 5 minutes', -3), ('Take a quick shower and turn off the water while soaping up', -5))},
-    {'answer_key': 'plastics', 'title': 'Packing snacks for tomorrow', 'context': 'You reported using single-use plastics {answer}. You are packing a drink and snacks for the day.', 'question': 'What do you bring along?', 'choices': (('Single-use bottles, bags, cups, and wrapped snacks', 8), ('A mix of disposable packaging and reusable items', 3), ('A reusable bottle and food container', -3), ('Reusable containers and unpackaged snacks', -5))},
-    {'answer_key': 'chemicals', 'title': 'A battery and leftover paint', 'context': 'You said you handle household or garden products {answer}. A remote needs a new battery, and you find old paint and cleaner in storage.', 'question': 'How do you store or dispose of them?', 'choices': (('Put batteries and leftover products in regular trash', 8), ('Store everything without checking the labels', 3), ('Follow product labels and local disposal guidance', -4), ('Store items safely and take hazardous waste to a collection site', -5))},
+    {'answer_key': 'transport', 'title': 'A rainy morning commute', 'context': 'The selected response says gasoline-vehicle travel is {answer}. A friend headed the same way offers to share the trip.', 'question': 'How do you get across town today?', 'choices': (('Drive alone in a gasoline car', 8), ('Share the ride with your friend', 3), ('Take the bus or train', -3), ('Walk or bike if it is safe and practical', -5))},
+    {'answer_key': 'appliances', 'title': 'A warm afternoon at home', 'context': 'The selected response says high-energy appliances are used {answer}. The room is getting warm while you work.', 'question': 'What is your first move to stay comfortable?', 'choices': (('Run the air conditioner with the windows open', 8), ('Cool the room with windows closed and a reasonable setting', 3), ('Use a fan and close the curtains against direct sun', -2), ('Ventilate naturally when it is cooler outside', -4))},
+    {'answer_key': 'flights', 'title': 'A weekend visit with friends', 'context': 'The selected response estimates {answer} of air travel in a typical year. Friends invite you to a nearby gathering.', 'question': 'How do you make the trip happen?', 'choices': (('Book several flights for short visits', 9), ('Take one direct flight', 5), ('Use a train or bus if the route works', -3), ('Join remotely or plan a local get-together', -5))},
+    {'answer_key': 'diet', 'title': 'Lunch with your friends', 'context': 'The selected response for beef and lamb meals is {answer}. The cafe has several filling options.', 'question': 'What goes on your plate today?', 'choices': (('Order the beef or lamb special', 8), ('Choose another meat option', 4), ('Try a vegetarian meal', -3), ('Choose a plant-based meal using food already available', -5))},
+    {'answer_key': 'trash', 'title': 'The kitchen bin is full', 'context': 'The selected response estimates {answer} of trash each week. You notice clean containers and food scraps in the bin.', 'question': 'How do you handle the cleanup?', 'choices': (('Throw everything into the regular trash', 7), ('Recycle accepted containers', 2), ('Recycle and compost where those services exist', -3), ('Sort waste and set aside usable items to reuse', -5))},
+    {'answer_key': 'shopping', 'title': 'A tempting new jacket', 'context': 'The selected response says new clothes or other products are bought {answer}. A current jacket still works, but a new one catches your eye.', 'question': 'What do you do before checking out?', 'choices': (('Buy the new jacket right away', 7), ('Wait a day and decide whether you need it', 2), ('Repair or keep wearing the jacket you own', -3), ('Borrow one or look for a second-hand option', -5))},
+    {'answer_key': 'secondhand', 'title': 'Finding a bookshelf', 'context': 'The selected response says second-hand products are purchased {answer}. You need a bookshelf for your room.', 'question': 'Where do you look first?', 'choices': (('Order a brand-new bookshelf', 6), ('Check second-hand shops or local listings', -4), ('Reuse, borrow, or repair a shelf already nearby', -5))},
+    {'answer_key': 'electronics', 'title': 'A new phone is released', 'context': 'The selected response says electronics are replaced {answer}. A current phone still works, and a newer model is advertised.', 'question': 'How do you decide what to do?', 'choices': (('Buy the new phone now', 8), ('Replace it when it no longer meets your needs', 2), ('Repair it or keep using it for longer', -5))},
+    {'answer_key': 'dishes', 'title': 'Dishes after dinner', 'context': 'The selected response indicates a {answer} dishwashing method. Tonight there are enough dishes for a small load.', 'question': 'How do you wash them efficiently?', 'choices': (('Run the dishwasher half-full', 6), ('Wait for a full load and use an efficient cycle', -4), ('Handwash in a filled basin', -3), ('Leave the hot tap running while washing', 6))},
+    {'answer_key': 'showers', 'title': 'Winding down for the night', 'context': 'The selected response says showers usually last {answer}. A busy day is winding down.', 'question': 'How do you use water tonight?', 'choices': (('Take a shower longer than 15 minutes', 7), ('Take a shower of about 10 minutes', 3), ('Keep it near 5 minutes', -3), ('Take a quick shower and turn off the water while soaping up', -5))},
+    {'answer_key': 'plastics', 'title': 'Packing snacks for tomorrow', 'context': 'The selected response indicates single-use plastic use is {answer}. A drink and snacks are being packed for the day.', 'question': 'What do you bring along?', 'choices': (('Single-use bottles, bags, cups, and wrapped snacks', 8), ('A mix of disposable packaging and reusable items', 3), ('A reusable bottle and food container', -3), ('Reusable containers and unpackaged snacks', -5))},
+    {'answer_key': 'chemicals', 'title': 'A battery and leftover paint', 'context': 'The selected response says household or garden products are handled {answer}. A remote needs a new battery, and old paint and cleaner are in storage.', 'question': 'How do you store or dispose of them?', 'choices': (('Put batteries and leftover products in regular trash', 8), ('Store everything without checking the labels', 3), ('Follow product labels and local disposal guidance', -4), ('Store items safely and take hazardous waste to a collection site', -5))},
 )
 
 
@@ -426,12 +430,16 @@ class Handler(SimpleHTTPRequestHandler):
         # server state. The browser receives only a safe view of that state.
         try:
             if path == '/api/game/start':
-                if payload.get('entry') != 'cascade-bottom':
-                    self.send_json(403, {'error': 'Begin Little Planet Life from the final cascade layer.'})
-                    return
-                labels = validate_answers(payload)
+                if payload.get('use_defaults') is True:
+                    if 'answers' in payload:
+                        raise ValueError('Choose questionnaire answers or sample answers, not both.')
+                    answers = dict(DEFAULT_ANSWERS)
+                    labels = validate_answers({'answers': answers})
+                else:
+                    labels = validate_answers(payload)
+                    answers = payload['answers']
                 days = validate_game_days(payload.get('days'))
-                game_id, state = new_game(payload['answers'], labels, days)
+                game_id, state = new_game(answers, labels, days)
                 self.send_json(200, {'game_id': game_id, 'game': game_view(state)})
                 return
             if path == '/api/game/state':
