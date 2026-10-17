@@ -9,10 +9,33 @@ from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parent
 LAYERS = ('sky', 'air', 'water', 'twilight', 'deep', 'floor')
-# Use the actual questionnaire as the canonical answer vocabulary.
+
+
+def load_local_env():
+    """Load ignored local development settings without an extra dependency."""
+    env_file = ROOT / '.env'
+    if not env_file.is_file():
+        return
+    for line in env_file.read_text(encoding='utf-8-sig').splitlines():
+        line = line.strip()
+        if not line or line.startswith('#') or '=' not in line:
+            continue
+        name, value = line.split('=', 1)
+        name, value = name.strip(), value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:
+            value = value[1:-1]
+        if name and value:
+            os.environ.setdefault(name, value)
+
+
+load_local_env()
+# Use the slider labels in the questionnaire as the canonical answer vocabulary.
 OPTIONS = {}
-for name, value, label in re.findall(r'<input type="radio" name="([\w-]+)" value="(\d+)"[^>]*><span>([^<]+)</span>', (ROOT / 'questionnaire.html').read_text(encoding='utf-8')):
-    OPTIONS.setdefault(name, {})[int(value)] = label
+for name, minimum, maximum, step, labels in re.findall(r'<input type="range" name="([\w-]+)" min="(\d+)" max="(\d+)" step="(\d+)"[^>]*data-labels="([^"]+)"', (ROOT / 'questionnaire.html').read_text(encoding='utf-8')):
+    choices = labels.split('|')
+    if len(choices) != (int(maximum) - int(minimum)) // int(step) + 1:
+        raise ValueError(f'Slider labels do not match its range: {name}')
+    OPTIONS[name] = {index: label for index, label in enumerate(choices)}
 
 
 def validate_answers(data):
@@ -24,11 +47,7 @@ def validate_answers(data):
     for key, value in answers.items():
         if type(value) is not int:
             raise ValueError('Invalid answer type.')
-        if key == 'flights':
-            if value != 0 and (value < 2 or value > 30 or value % 2):
-                raise ValueError('Flight hours must be less than one or between 2 and 30 in even intervals.')
-            labels[key] = 'Less than 1 hour' if value == 0 else f'{value} hours per year'
-        elif value not in OPTIONS[key]:
+        if value not in OPTIONS[key]:
             raise ValueError('Answer is outside the available choices.')
         else:
             labels[key] = OPTIONS[key][value]
@@ -67,7 +86,7 @@ Layer-specific focus:
 - deep ocean: focus on indirect warming and carbon-cycle pathways from the user's fuel travel, flight hours, high-energy appliances, and meat choices. Do not claim household actions directly reach or poison deep-sea life; explain climate links and relevant emissions reductions.
 - seafloor/floor: focus on sinking debris and improperly disposed chemicals reaching benthic habitats, plus indirect climate pressure. Tie the explanation to the user's trash/plastic/chemical and product-lifetime answers, and recommend preventing litter, safe disposal, reuse, or local shoreline/seafloor restoration only where appropriate.
 Selected answers (all twelve questions): ''' + json.dumps(answers)
-    body = {'contents': [{'parts': [{'text': prompt}]}], 'generationConfig': {'responseMimeType': 'application/json', 'responseJsonSchema': schema}}
+    body = {'contents': [{'parts': [{'text': prompt}]}], 'generationConfig': {'responseMimeType': 'application/json', 'responseJsonSchema': schema, 'maxOutputTokens': 3000, 'temperature': 0.35}}
     model = os.environ.get('GEMINI_MODEL', 'gemini-2.5-flash')
     if not re.fullmatch(r'[a-zA-Z0-9._-]+', model):
         raise ValueError('Invalid model name.')
@@ -128,8 +147,15 @@ class Handler(SimpleHTTPRequestHandler):
             return
         try:
             insights = generate_insights(answers, key)
-        except Exception:
-            self.send_json(502, {'error': 'Gemini could not return valid layer explanations. Please try again.'})
+        except Exception as error:
+            detail = str(error) or error.__class__.__name__
+            if hasattr(error, 'read'):
+                try:
+                    error_payload = json.loads(error.read().decode('utf-8'))
+                    detail = error_payload.get('error', {}).get('message', detail)
+                except (ValueError, UnicodeError, AttributeError):
+                    pass
+            self.send_json(502, {'error': f'Gemini ripple generation failed ({detail}). Check GEMINI_API_KEY, model access, and network connection.'})
             return
         self.send_json(200, {'insights': insights})
 
