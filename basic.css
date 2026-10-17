@@ -1,15 +1,13 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap");
 
 :root {
-    color-scheme: light;
-    --ink: #1A5897;
-    --muted: #1A5897;
-    --soft: #1A5897;
-    --deep: #73A3D0;
-    --panel: #C2D7E9;
-    --teal: #1A5897;
-    font-family: "DM Sans", "Segoe UI", sans-serif;
-    background: var(--deep);
+    color-scheme: dark;
+    --ink: #edf8f5;
+    --muted: #a6c2c4;
+    --soft: #d4e8e3;
+    --deep: #071d2b;
+    --teal: #60d6c2;
+    background: #04131f;
     color: var(--ink);
 }
 .bubblegum-sans-regular {
@@ -57,6 +55,15 @@ h1, h2 { font-family: "Manrope", "Segoe UI", sans-serif; }
     background-position: center;
     background-size: cover;
     background-repeat: no-repeat;
+    font-family: "Bubblegum Sans", sans-serif;
+    font-weight: 500;
+    font-style: normal;
+}
+
+h1{
+    font-family: "Fuzzy Bubbles", sans-serif;
+    font-weight: 400;
+    font-style: normal;
 }
 .home-page::before {
     position: fixed;
