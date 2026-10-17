@@ -10,7 +10,7 @@ if (form) {
             localStorage.setItem('ecosphere-answers', JSON.stringify(answers));
             localStorage.setItem('ecosphere-score', String(Object.values(answers).reduce((sum, n) => sum + n, 0)));
             localStorage.removeItem('ecosphere-insights');
-            window.location.assign('cascade.html');
+            navigateAfterRipple('cascade.html');
         } catch {
             window.alert('Your browser could not save this check-in. Please enable local storage and try again.');
         }
@@ -91,3 +91,43 @@ if ('IntersectionObserver' in window) {
     }, {rootMargin: '-15% 0px -45% 0px'});
     document.querySelectorAll('.layer-section').forEach(section => observer.observe(section));
 }
+
+// Start on press so the ripple responds immediately, including before navigation.
+function navigateAfterRipple(url) {
+    const delay = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 180;
+    window.setTimeout(() => window.location.assign(url), delay);
+}
+function createButtonRipple(button, event) {
+    if (button.matches(':disabled, [aria-disabled="true"]') ||
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const bounds = button.getBoundingClientRect();
+    const keyboard = event.type === 'click' && event.detail === 0;
+    const x = keyboard ? bounds.width / 2 : event.clientX - bounds.left;
+    const y = keyboard ? bounds.height / 2 : event.clientY - bounds.top;
+    const size = 2 * Math.hypot(Math.max(x, bounds.width - x), Math.max(y, bounds.height - y));
+    const ripple = document.createElement('span');
+    ripple.className = 'button-ripple';
+    ripple.setAttribute('aria-hidden', 'true');
+    ripple.style.width = ripple.style.height = `${size}px`;
+    ripple.style.left = `${x - size / 2}px`;
+    ripple.style.top = `${y - size / 2}px`;
+    button.append(ripple);
+    ripple.addEventListener('animationend', () => ripple.remove(), {once: true});
+    window.setTimeout(() => ripple.remove(), 700);
+}
+document.addEventListener('pointerdown', event => {
+    const button = event.target.closest('button, .button');
+    if (button && event.button === 0) createButtonRipple(button, event);
+});
+document.addEventListener('click', event => {
+    const button = event.target.closest('button, .button');
+    if (!button) return;
+    if (event.detail === 0) createButtonRipple(button, event);
+    // Preserve modified clicks, downloads, and links opening in another tab.
+    if (button.matches('a[href]') && !event.defaultPrevented && event.button === 0 &&
+        !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey &&
+        !button.hasAttribute('download') && (!button.target || button.target === '_self')) {
+        event.preventDefault();
+        navigateAfterRipple(button.href);
+    }
+});
