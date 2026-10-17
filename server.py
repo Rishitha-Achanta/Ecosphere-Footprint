@@ -86,18 +86,32 @@ Layer-specific focus:
 - deep ocean: focus on indirect warming and carbon-cycle pathways from the user's fuel travel, flight hours, high-energy appliances, and meat choices. Do not claim household actions directly reach or poison deep-sea life; explain climate links and relevant emissions reductions.
 - seafloor/floor: focus on sinking debris and improperly disposed chemicals reaching benthic habitats, plus indirect climate pressure. Tie the explanation to the user's trash/plastic/chemical and product-lifetime answers, and recommend preventing litter, safe disposal, reuse, or local shoreline/seafloor restoration only where appropriate.
 Selected answers (all twelve questions): ''' + json.dumps(answers)
-    body = {'contents': [{'parts': [{'text': prompt}]}], 'generationConfig': {'responseMimeType': 'application/json', 'responseJsonSchema': schema, 'maxOutputTokens': 3000, 'thinkingConfig': {'thinkingLevel': 'low'}}}
-    model = os.environ.get('GEMINI_MODEL', 'gemini-3.8-flash')
+    body = {
+        'model': os.environ.get('GEMINI_MODEL', 'gemini-3.8-flash'),
+        'input': prompt,
+        'response_format': {'type': 'text', 'mime_type': 'application/json', 'schema': schema},
+        'generation_config': {'max_output_tokens': 3000, 'thinking_level': 'low'},
+        'store': False,
+    }
+    model = body['model']
     if not re.fullmatch(r'[a-zA-Z0-9._-]+', model):
         raise ValueError('Invalid model name.')
-    request = Request(f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent', data=json.dumps(body).encode(), headers={'Content-Type': 'application/json', 'x-goog-api-key': api_key})
+    request = Request('https://generativelanguage.googleapis.com/v1beta/interactions', data=json.dumps(body).encode(), headers={'Content-Type': 'application/json', 'x-goog-api-key': api_key})
     with urlopen(request, timeout=25) as response:
         result = json.load(response)
-    candidates = result.get('candidates') or []
-    if not candidates:
-        raise ValueError('Gemini returned no explanation. Check the model response and try again.')
-    parts = (candidates[0].get('content') or {}).get('parts') or []
-    response_text = ''.join(part.get('text', '') for part in parts if not part.get('thought'))
+    response_status = result.get('status')
+    if response_status and response_status != 'completed':
+        errors = result.get('errors') or []
+        detail = errors[0].get('message') if errors and isinstance(errors[0], dict) else None
+        detail = detail or response_status
+        raise ValueError(f'Gemini interaction {response_status}: {detail}')
+    response_text = ''.join(
+        part.get('text', '')
+        for step in (result.get('steps') or [])
+        if step.get('type') == 'model_output'
+        for part in (step.get('content') or [])
+        if part.get('type') == 'text'
+    )
     if not response_text:
         raise ValueError('Gemini returned an empty explanation. Try again.')
     return validate_insights(json.loads(response_text))
