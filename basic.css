@@ -34,9 +34,9 @@ h1, h2 { font-family: "Manrope", "Segoe UI", sans-serif; }
     align-items: center;
     gap: 10px;
     color: var(--ink);
-    font-family: "Manrope", sans-serif;
+    font-family: "Bubblegum Sans", sans-serif;
     font-size: 13px;
-    font-weight: 800;
+    font-weight: 400;
     letter-spacing: .15em;
     text-decoration: none;
 }
@@ -46,8 +46,38 @@ h1, h2 { font-family: "Manrope", "Segoe UI", sans-serif; }
 .site-footer span:first-child { color: var(--soft); font-family: "Manrope", sans-serif; font-size: 10px; font-weight: 800; letter-spacing: .16em; }
 
 .home-page {
+    position: relative;
     overflow-x: hidden;
-    background: radial-gradient(ellipse at 80% 23%, rgba(29, 112, 127, .2), transparent 35%), linear-gradient(135deg, #081e2c, #0a2935 60%, #0b3440);
+    min-height: 100vh;
+    background-color: #222B68;
+    background-image: radial-gradient(ellipse at 85% 75%, #24546788, transparent 55%);
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+.home-page::before {
+    position: fixed;
+    z-index: 0;
+    inset: 0;
+    background:
+        radial-gradient(circle at 8% 38%, transparent 0 5px, rgba(188, 222, 255, .35) 6px 7px, transparent 8px),
+        radial-gradient(circle at 91% 18%, transparent 0 8px, rgba(188, 222, 255, .3) 9px 10px, transparent 11px),
+        radial-gradient(circle at 72% 74%, transparent 0 4px, rgba(188, 222, 255, .33) 5px 6px, transparent 7px),
+        radial-gradient(circle at 28% 86%, transparent 0 9px, rgba(188, 222, 255, .23) 10px 11px, transparent 12px),
+        radial-gradient(circle at 48% 12%, rgba(174, 188, 255, .15), transparent 27%);
+    content: "";
+    pointer-events: none;
+    animation: ocean-drift 18s ease-in-out infinite alternate;
+}
+.home-page > .site-header,
+.home-page > main,
+.home-page > .site-footer {
+    position: relative;
+    z-index: 1;
+}
+@keyframes ocean-drift {
+    from { transform: translate3d(0, -8px, 0); }
+    to { transform: translate3d(0, 10px, 0); }
 }
 .hero {
     display: grid;
@@ -69,8 +99,33 @@ h1, h2 { font-family: "Manrope", "Segoe UI", sans-serif; }
 .button:hover { transform: translateY(-2px); }
 .button-primary { background: var(--teal); color: #08242c; }
 .button-primary:hover { background: #8be7d3; }
+.hero-copy > .button-primary {
+    min-height: 64px;
+    gap: 30px;
+    padding: 0 30px;
+    border: 1px solid rgba(220, 255, 244, .65);
+    border-radius: 7px;
+    background: linear-gradient(115deg, #74ead0, #a1f0d9);
+    box-shadow: 0 9px 30px rgba(62, 222, 190, .28), 0 0 0 5px rgba(96, 214, 194, .1);
+    font-size: 16px;
+    font-weight: 800;
+}
+.hero-copy > .button-primary:hover {
+    background: linear-gradient(115deg, #9af5dc, #c0f7df);
+    box-shadow: 0 12px 38px rgba(62, 222, 190, .4), 0 0 0 7px rgba(96, 214, 194, .13);
+}
+.hero-copy > .button-primary span {
+    font-size: 21px;
+}
 .button-caption { margin: 12px 0 0 2px; color: #89a7aa; font-size: 11px; }
 .planet-art { position: relative; display: grid; min-height: 440px; place-items: center; isolation: isolate; }
+.home-clipart { position: absolute; z-index: 2; overflow: visible; pointer-events: none; }
+.cute-fish { width: 86px; filter: drop-shadow(0 5px 12px rgba(7, 14, 53, .3)); }
+.cute-fish-one { top: 16%; left: 2%; transform: rotate(-8deg); }
+.cute-fish-two { top: 30%; right: 1%; width: 66px; transform: scaleX(-1) rotate(-6deg); }
+.coral-art { bottom: 11px; width: 105px; }
+.coral-left { left: 0; }
+.coral-right { right: 1%; width: 92px; transform: scaleX(-1); }
 .planet {
     position: relative;
     z-index: 1;
@@ -176,6 +231,10 @@ h1, h2 { font-family: "Manrope", "Segoe UI", sans-serif; }
     .hero { min-height: auto; grid-template-columns: 1fr; gap: 0; padding-top: 65px; }
     .hero-copy { position: relative; z-index: 2; }
     .planet-art { min-height: 360px; margin-top: -15px; }
+    .cute-fish-one { top: 13%; left: 3%; width: 70px; }
+    .cute-fish-two { top: 25%; right: 3%; width: 56px; }
+    .coral-art { bottom: 9px; width: 88px; }
+    .coral-right { width: 78px; }
     .planet { width: min(250px, 64vw); }
     .orbit { width: min(390px, 90vw); }
     .intro-strip { align-items: flex-start; flex-direction: column; gap: 19px; margin-bottom: 24px; }
@@ -201,3 +260,32 @@ h1, h2 { font-family: "Manrope", "Segoe UI", sans-serif; }
     html { scroll-behavior: auto; }
     *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
+/* Quiet ocean motifs and a continuous descent from sky to seafloor. */
+.home-page { background-color: #202b54; }
+.home-page::before { opacity: .3; }
+.reef-art img { width: 115%; max-width: 600px; height: auto; }
+.reef-art .art-label { bottom: 0; }
+.cascade-page { background: #172c4d; }
+.cascade-page .result-intro { padding-block: 70px; }
+.insight-status { color: #a9d6d1; font-size: 12px; line-height: 1.6; }
+.cascade { background: linear-gradient(#172c4d 0%, #3d7390 17%, #568f9c 29%, #257f8d 36%, #126079 48%, #103b59 63%, #0b263e 80%, #091a2a 95%); }
+.cascade .layer-section { background: transparent; min-height: 650px; display: grid; grid-template-columns: 1.1fr 1fr; gap: 35px; padding-block: 85px; }
+.layer-content { width: 100%; }
+.layer-content h2 { font-size: clamp(34px, 4vw, 54px); }
+.layer-content > p:not(.layer-index):not(.layer-subtitle) { color: #e2efed; }
+.layer-note { border-radius: 0 12px 12px 0; background: rgba(5,22,33,.3); padding: 20px; color: #d4e8e5; }
+.layer-note strong { display: block; color: #a4ead8; margin-bottom: 7px; font-size: 10px; text-transform: uppercase; letter-spacing: .15em; }
+.nature-scene { margin: 0; min-width: 0; }
+.nature-scene img { width: 100%; height: auto; animation: nature-float 9s ease-in-out infinite alternate; }
+.nature-scene figcaption { text-align: center; color: #b5d5db; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; }
+.surface-ocean::before { content: ""; position: absolute; top: 0; width: 100%; height: 45px; border-top: 2px solid #afe8df55; border-radius: 50%; background: linear-gradient(#b8eee915, transparent); }
+.layer-nav a[aria-current="location"] { color: #a5f3da; }
+@keyframes nature-float { to { transform: translateY(-10px); } }
+@media (max-width: 760px) {
+    .cascade .layer-section { grid-template-columns: 1fr; gap: 15px; padding-block: 55px; }
+    .nature-scene { width: min(420px, 100%); justify-self: center; }
+    .nature-scene img { max-height: 290px; }
+    .reef-art img { width: 100%; }
+    .cascade-page .result-intro { padding-block: 45px; }
+}
+@media (prefers-reduced-motion: reduce) { .nature-scene img { animation: none; } }

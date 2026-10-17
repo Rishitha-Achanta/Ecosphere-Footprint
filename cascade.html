@@ -23,6 +23,7 @@
             <div>
                 <p class="eyebrow"><span class="eyebrow-line"></span> YOUR PLANETARY RIPPLE</p>
                 <h1>One planet.<br><span>Many connections.</span></h1>
+                <p class="insight-status" id="insight-status" role="status"></p>
                 <p id="result-summary">Your everyday choices travel through a living system. Scroll down to follow the ripple from sky to sea.</p>
             </div>
             <div class="score-card" aria-live="polite">
@@ -33,38 +34,31 @@
             </div>
         </section>
 
-        <nav class="layer-nav" aria-label="Planet layers">
-            <a href="#troposphere"><span>01</span> Air</a>
-            <a href="#stratosphere"><span>02</span> Sky</a>
-            <a href="#surface-ocean"><span>03</span> Surface</a>
-            <a href="#deep-ocean"><span>04</span> Deep</a>
-            <a href="#ocean-floor"><span>05</span> Floor</a>
-        </nav>
+        <nav class="layer-nav" aria-label="Planet layers"><a href="#stratosphere"><span>01</span> Sky</a><a href="#troposphere"><span>02</span> Air</a><a href="#surface-ocean"><span>03</span> Surface</a><a href="#twilight-zone"><span>04</span> Twilight</a><a href="#deep-ocean"><span>05</span> Deep</a><a href="#ocean-floor"><span>06</span> Floor</a></nav>
 
         <div class="cascade">
-            <section class="layer-section atmosphere-layer troposphere" id="troposphere">
+            <section class="layer-section atmosphere-layer stratosphere" id="stratosphere">
                 <div class="layer-content">
                     <p class="layer-index">01 / ATMOSPHERE</p>
+                    <h2>A delicate blue shield</h2>
+                    <p class="layer-subtitle">Stratosphere · home to the ozone layer</p>
+                    <p>High above the clouds, the ozone layer absorbs much of the Sun's harmful ultraviolet radiation. Ozone protection depends on limiting ozone-depleting chemicals; the climate effects of everyday energy use are a separate, connected story.</p>
+                    <div class="layer-note"><span class="note-icon">↗</span><span><strong>Your ripple:</strong> <span data-insight="sky">Your everyday choices connect to this living system.</span></span></div>
+                    <a class="next-layer" href="#troposphere">Follow the clouds <span aria-hidden="true">↓</span></a>
+                </div>
+                <figure class="nature-scene"><img src="assets/sky.svg" alt="" width="600" height="460" loading="lazy"><figcaption>15–50 km · above the clouds</figcaption></figure>
+            </section>
+
+            <section class="layer-section atmosphere-layer troposphere" id="troposphere">
+                <div class="layer-content">
+                    <p class="layer-index">02 / ATMOSPHERE</p>
                     <h2>The air we share</h2>
                     <p class="layer-subtitle">Troposphere · where weather and daily life meet</p>
                     <p>Transportation, home energy, and the food we grow all shape greenhouse gas emissions. These gases gather in the air around us, influencing the climate systems every community depends on.</p>
                     <div class="layer-note"><span class="note-icon">↗</span><span><strong>Your ripple:</strong> <span data-insight="air">Your transport and home-energy choices are part of the atmosphere's story.</span></span></div>
-                    <a class="next-layer" href="#stratosphere">Continue upward <span aria-hidden="true">↓</span></a>
+                    <a class="next-layer" href="#surface-ocean">Meet the shoreline <span aria-hidden="true">↓</span></a>
                 </div>
-                <span class="layer-decoration cloud cloud-one" aria-hidden="true"></span>
-                <span class="layer-decoration cloud cloud-two" aria-hidden="true"></span>
-            </section>
-
-            <section class="layer-section atmosphere-layer stratosphere" id="stratosphere">
-                <div class="layer-content">
-                    <p class="layer-index">02 / ATMOSPHERE</p>
-                    <h2>A delicate blue shield</h2>
-                    <p class="layer-subtitle">Stratosphere · home to the ozone layer</p>
-                    <p>High above the clouds, the ozone layer absorbs much of the Sun's harmful ultraviolet radiation. Protecting the atmosphere means making thoughtful choices about energy, materials, and the systems we share.</p>
-                    <div class="layer-note"><span class="note-icon">✳</span><span><strong>Connected system:</strong> Small changes matter most when communities and cleaner infrastructure make them possible for everyone.</span></div>
-                    <a class="next-layer" href="#surface-ocean">Follow the water <span aria-hidden="true">↓</span></a>
-                </div>
-                <span class="layer-decoration sun-glow" aria-hidden="true"></span>
+                <figure class="nature-scene"><img src="assets/landscape.svg" alt="" width="600" height="460" loading="lazy"><figcaption>0–15 km · weather, forests & rivers</figcaption></figure>
             </section>
 
             <section class="layer-section ocean-layer surface-ocean" id="surface-ocean">
@@ -74,11 +68,9 @@
                     <p class="layer-subtitle">Sunlit zone · the ocean's bright, living skin</p>
                     <p>The ocean absorbs heat and carbon from the atmosphere. Its sunlit surface supports tiny drifting plankton, seagrass, coral reefs, and the food webs that sustain life far beyond the shoreline.</p>
                     <div class="layer-note"><span class="note-icon">≈</span><span><strong>Your ripple:</strong> <span data-insight="water">The things we use and throw away can travel through waterways to the sea.</span></span></div>
-                    <a class="next-layer" href="#twilight-zone">Dive deeper <span aria-hidden="true">↓</span></a>
+                    <a class="next-layer" href="#twilight-zone">Beneath the surface <span aria-hidden="true">↓</span></a>
                 </div>
-                <span class="layer-decoration sun-rays" aria-hidden="true"></span>
-                <span class="layer-decoration fish fish-one" aria-hidden="true">›))</span>
-                <span class="layer-decoration fish fish-two" aria-hidden="true">›))</span>
+                <figure class="nature-scene"><img src="assets/reef.svg" alt="" width="600" height="460" loading="lazy"><figcaption>0–200 m · sunlight feeds life</figcaption></figure>
             </section>
 
             <section class="layer-section ocean-layer twilight-zone" id="twilight-zone">
@@ -87,10 +79,10 @@
                     <h2>Into the blue twilight</h2>
                     <p class="layer-subtitle">Twilight zone · light fades, life adapts</p>
                     <p>Below the reach of most sunlight, ocean currents carry heat, oxygen, and nutrients across enormous distances. What happens on land can reach the sea through runoff, waste, and the changing climate.</p>
-                    <div class="layer-note"><span class="note-icon">≈</span><span><strong>Connected system:</strong> Less waste and more mindful consumption can help keep plastics and pollution out of rivers and coastal waters.</span></div>
-                    <a class="next-layer" href="#deep-ocean">Keep descending <span aria-hidden="true">↓</span></a>
+                    <div class="layer-note"><span class="note-icon">↗</span><span><strong>Your ripple:</strong> <span data-insight="twilight">Your everyday choices connect to this living system.</span></span></div>
+                    <a class="next-layer" href="#deep-ocean">Into the midnight blue <span aria-hidden="true">↓</span></a>
                 </div>
-                <span class="layer-decoration deep-fish" aria-hidden="true">◉</span>
+                <figure class="nature-scene"><img src="assets/jellyfish.svg" alt="" width="600" height="460" loading="lazy"><figcaption>200–1,000 m · a fading blue</figcaption></figure>
             </section>
 
             <section class="layer-section ocean-layer deep-ocean" id="deep-ocean">
@@ -102,7 +94,7 @@
                     <div class="layer-note"><span class="note-icon">✧</span><span><strong>Your ripple:</strong> <span data-insight="deep">Using energy thoughtfully is one way to care for the climate systems that reach even the deep ocean.</span></span></div>
                     <a class="next-layer" href="#ocean-floor">Reach the ocean floor <span aria-hidden="true">↓</span></a>
                 </div>
-                <span class="layer-decoration deep-glow" aria-hidden="true"></span>
+                <figure class="nature-scene"><img src="assets/deep-life.svg" alt="" width="600" height="460" loading="lazy"><figcaption>1,000–4,000 m · living lights</figcaption></figure>
             </section>
 
             <section class="layer-section ocean-layer ocean-floor" id="ocean-floor">
@@ -111,13 +103,13 @@
                     <h2>One shared home</h2>
                     <p class="layer-subtitle">Abyssal plain · the bottom is another beginning</p>
                     <p>From the atmosphere to the ocean floor, Earth's layers are part of one living system. A footprint is not a verdict—it is an invitation to notice connections, ask questions, and choose a next step.</p>
-                    <div class="layer-note"><span class="note-icon">✦</span><span><strong>Take one next step:</strong> Pick one change that feels doable, then learn how your community can make it easier to keep going.</span></div>
+                    <div class="layer-note"><span class="note-icon">↗</span><span><strong>Your ripple:</strong> <span data-insight="floor">Your everyday choices connect to this living system.</span></span></div>
                     <div class="end-actions">
                         <a class="button button-primary" href="questionnaire.html">Reflect again <span aria-hidden="true">↗</span></a>
                         <a class="text-link" href="homepage.html">Back to the surface ↑</a>
                     </div>
                 </div>
-                <span class="layer-decoration seabed-life" aria-hidden="true">✦　⌁　✧　⌁　✦</span>
+                <figure class="nature-scene"><img src="assets/seafloor.svg" alt="" width="600" height="460" loading="lazy"><figcaption>4,000+ m · a quieter world</figcaption></figure>
             </section>
         </div>
     </main>
