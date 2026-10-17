@@ -7,9 +7,13 @@
     --soft: #d4e8e3;
     --deep: #071d2b;
     --teal: #60d6c2;
-    font-family: "DM Sans", "Segoe UI", sans-serif;
     background: #04131f;
     color: var(--ink);
+}
+.bubblegum-sans-regular {
+  font-family: "Bubblegum Sans", sans-serif;
+  font-weight: 400;
+  font-style: normal;
 }
 
 * { box-sizing: border-box; }
