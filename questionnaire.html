@@ -19,10 +19,12 @@
             <p class="eyebrow"><span class="eyebrow-line"></span> YOUR FOOTPRINT CHECK</p>
             <h1>Every choice matters</h1>
             <p>Answer 12 questions, one at a time. Move each slider to the response that best fits your usual routine.</p>
-            <div class="progress-track" aria-label="Question 1 of 12"><span></span></div>
-            <p class="progress-caption" aria-live="polite">1 of 12 questions <span>·</span> Answer to continue</p>
         </div>
         <form id="footprint-form" action="cascade.html">
+            <div class="quiz-progress">
+                <div class="progress-track" aria-label="Question 1 of 12"><span></span></div>
+                <p class="progress-caption" aria-live="polite">1 of 12 questions <span>·</span> Answer to continue</p>
+            </div>
             <div class="question-grid">
                 <fieldset class="question-card"><legend><span class="question-number">01</span> How often do you usually travel by gasoline vehicles?</legend>
                     <label class="slider-control"><span>Never</span><input type="range" name="transport" min="0" max="4" step="1" value="2" data-labels="Never|Rarely|Sometimes|Often|Always" aria-label="Gasoline vehicle travel frequency"><span>Always</span></label><output class="slider-output" data-slider-output="transport" aria-live="polite">Sometimes</output>
