@@ -212,8 +212,13 @@ Layer-specific focus:
 - seafloor/floor: focus on sinking debris and improperly disposed chemicals reaching benthic habitats, plus indirect climate pressure. Tie the explanation to the user's trash/plastic/chemical and product-lifetime answers, and recommend preventing litter, safe disposal, reuse, or local shoreline/seafloor restoration only where appropriate.
 Selected answers (all twelve questions): ''' + json.dumps(answers)
     response_format = {'type': 'text', 'mime_type': 'application/json', 'schema': schema}
-    response_text = gemini_interaction(prompt, api_key, response_format=response_format)
-    return validate_insights(json.loads(response_text))
+    for attempt in range(2):
+        try:
+            response_text = gemini_interaction(prompt, api_key, response_format=response_format)
+            return validate_insights(json.loads(response_text))
+        except (ValueError, TypeError) as error:
+            if attempt == 1:
+                raise GeminiServiceError('Gemini did not return six explanations in the required format after a retry.', 'retry', retryable=True) from error
 
 
 def validate_hint(text):
@@ -231,7 +236,12 @@ Survey answers: ''' + json.dumps(answers, ensure_ascii=False) + '''
 Current scenario: ''' + json.dumps(scenario, ensure_ascii=False) + '''
 Available choices: ''' + json.dumps(choices, ensure_ascii=False) + '''
 Earlier game choices: ''' + json.dumps(history, ensure_ascii=False)
-    return validate_hint(gemini_interaction(prompt, api_key, max_output_tokens=180))
+    for attempt in range(2):
+        try:
+            return validate_hint(gemini_interaction(prompt, api_key, max_output_tokens=180))
+        except ValueError as error:
+            if attempt == 1:
+                raise GeminiServiceError('Gemini did not return a hint in the required format after a retry.', 'retry', retryable=True) from error
 
 
 class Handler(SimpleHTTPRequestHandler):

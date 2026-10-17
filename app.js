@@ -1,5 +1,6 @@
 const answerNames = ['transport', 'appliances', 'flights', 'diet', 'trash', 'shopping', 'secondhand', 'electronics', 'dishes', 'showers', 'plastics', 'chemicals'];
 const layers = ['sky', 'air', 'water', 'twilight', 'deep', 'floor'];
+const defaultInsights = Object.fromEntries(Array.from(document.querySelectorAll('[data-insight]'), node => [node.dataset.insight, node.textContent.trim()]));
 const form = document.querySelector('#footprint-form');
 if (form) {
     const cards = Array.from(form.querySelectorAll('.question-card'));
@@ -116,12 +117,16 @@ if (form) {
         try {
             localStorage.setItem('ecosphere-answers', JSON.stringify(answers));
             localStorage.removeItem('ecosphere-insights');
+            try { sessionStorage.removeItem('ecosphere-life-unlocked'); } catch { /* Session storage is optional. */ }
             navigateAfterRipple('cascade.html');
         } catch {
             window.alert('Your browser could not save this check-in. Please enable local storage and try again.');
         }
     });
 }
+document.querySelector('#play-life-game')?.addEventListener('click', () => {
+    try { sessionStorage.setItem('ecosphere-life-unlocked', 'cascade-bottom'); } catch { /* The game page will explain the route if storage is disabled. */ }
+});
 function validAnswers(answers) {
     const maxima = {transport: 4, appliances: 4, flights: 16, diet: 4, trash: 5, shopping: 4, secondhand: 4, electronics: 4, dishes: 1, showers: 4, plastics: 4, chemicals: 4};
     return answers && Object.keys(answers).length === answerNames.length && answerNames.every(key => Number.isInteger(answers[key]) && answers[key] >= 0 && answers[key] <= maxima[key]);
@@ -206,9 +211,7 @@ async function personalize() {
                 ? 'Could not reach the local server. Confirm python server.py is running, then retry.'
                 : reason;
         console.warn('Gemini ripple generation failed:', error);
-        document.querySelectorAll('[data-insight]').forEach(node => {
-            node.textContent = 'Your answers are saved. The tailored reflection is temporarily unavailable; use the recovery options above to try again.';
-        });
+        showInsights(defaultInsights);
         if (retryButton) retryButton.hidden = false;
         if (keyHelp && error?.recovery === 'replace_key') keyHelp.hidden = false;
     } finally { clearTimeout(timeout); }

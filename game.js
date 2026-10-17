@@ -159,7 +159,12 @@ const lifeScenes = [
 ];
 
 const gamePanel = document.querySelector('#game-panel');
-if (gamePanel) {
+const gameGate = document.querySelector('#game-gate');
+let cameFromCascadeEnd = false;
+try { cameFromCascadeEnd = sessionStorage.getItem('ecosphere-life-unlocked') === 'cascade-bottom'; } catch { /* Private browsing may disable session storage. */ }
+if (gamePanel && !cameFromCascadeEnd) {
+    gameGate.hidden = false;
+} else if (gamePanel) {
     const emptyPanel = document.querySelector('#game-empty');
     const answerMaxima = {transport: 4, appliances: 4, flights: 16, diet: 4, trash: 5, shopping: 4, secondhand: 4, electronics: 4, dishes: 1, showers: 4, plastics: 4, chemicals: 4};
     let surveyAnswers;
