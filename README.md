@@ -1,5 +1,7 @@
 # Ecosphere
 
+We would like to note that the GitHub repository was created on Thursday just to make sure that my(Samia) github works properly, and that the other(Mahidha, Annie, Rishita) github accounts work. No coding was done during this time. 
+
 A twelve-question reflection using one labeled slider at a time, followed by an illustrated descent from the upper atmosphere to the seafloor. The questionnaire randomizes question order on each visit and preserves the slider answers. Gemini creates tailored explanations for each of the six layers and, when configured, fresh scenario-based scenes when a Little Planet Life game starts.
 
 Little Planet Life is available directly at `http://127.0.0.1:<port>/lifestyle.html` using the port printed by the server. It lets the player choose one to four days, with three decisions in each day. A saved questionnaire check-in personalizes the game; without one, the game uses the questionnaire's sample responses.

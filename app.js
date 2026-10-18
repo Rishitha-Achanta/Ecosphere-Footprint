@@ -35,6 +35,10 @@ if (form) {
         const visibleIndexes = visibleCount === labels.length
             ? labels.map((_, index) => index)
             : Array.from({length: visibleCount}, (_, slot) => Math.round(slot * (labels.length - 1) / (visibleCount - 1)));
+        if (slider.name === 'trash' && !visibleIndexes.includes(2)) {
+            visibleIndexes[Math.floor(visibleIndexes.length / 2)] = 2;
+            visibleIndexes.sort((left, right) => left - right);
+        }
         visibleIndexes.forEach(index => {
             const markerLabel = document.createElement('span');
             markerLabel.className = 'slider-mark-label';
